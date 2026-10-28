@@ -29,114 +29,14 @@ import {
 	type SaveTranscriptResult,
 	type TranscriptEntry,
 } from '~/lib/transcripts-store'
-import type { NamedPath, ProjectSource } from '~/lib/types'
+import type { ProjectSource } from '~/lib/types'
 import { ErrorModalContext } from '~/providers/error-modal'
 import { withoutUnsupportedOptions } from '~/lib/model'
+import { lockModel } from '~/lib/model-lock'
 import { type Preference, usePreferenceProvider } from '~/providers/preference'
 
-export type JobStatus = 'queued' | 'running' | 'done' | 'error' | 'cancelled'
-
-/** One transcription input. `projectName` re-runs an existing project under the title it already has. */
-export interface EnqueueItem extends NamedPath {
-	/** Title of the project this input came from; used verbatim, without a source prefix. */
-	projectName?: string
-}
-
-export interface Job {
-	id: string
-	name: string
-	path: string
-	/** Origin of this newly created project. */
-	source?: ProjectSource
-	status: JobStatus
-	/** 0..100, only meaningful while running */
-	progress: number
-	segments: Segment[]
-	error?: string
-	/** wall clock seconds the transcription took */
-	seconds?: number
-	/** path of the .vibe.json this job was saved to / loaded from, when persisted */
-	savedPath?: string
-	/** true when the job was loaded from the store rather than transcribed in this session */
-	hydrated?: boolean
-	/** Last AI summary of this transcript, when one was made. */
-	summary?: string
-	/** Questions asked about this transcript and their answers, oldest first. */
-	thread?: AiThreadEntry[]
-	/** Names the user gave the diarized speakers, by zero-based speaker index. */
-	speakerNames?: SpeakerNames
-	/** What auto-export did with this transcript, when it ran. */
-	exported?: AutoExportResult
-}
-
-/** A run of two or more files: what batch users watch instead of the transcripts. */
-export interface BatchProgress {
-	total: number
-	done: number
-	startedAt: number
-	/** Seconds per finished file so far, for the time estimate; null until one finished. */
-	secondsPerFile: number | null
-}
-
-export interface BatchSummary {
-	total: number
-	seconds: number
-	exported: number
-	skipped: number
-	fallback: number
-	failed: number
-	/** The one folder everything went to, when there is one. */
-	folder: string | null
-	/** Jobs whose export did not go as planned, for "Show details". */
-	exceptions: { name: string; detail: string }[]
-}
-
-export interface TranscribeQueue {
-	jobs: Job[]
-	activeId: string | null
-	selectedId: string | null
-	selectedJob: Job | null
-	running: boolean
-	isAborting: boolean
-	hasResults: boolean
-	selectJob: (id: string) => void
-	enqueue: (files: EnqueueItem[]) => void
-	/** Transcribe the media already attached to a hydrated project with no transcript. */
-	transcribeJob: (jobId: string) => void
-	/**
-	 * Replace the session with a transcript loaded from the store, shown as a finished job.
-	 * `audioPath` is the media copy kept in the project folder, when it still has one; it becomes the
-	 * job's path so the player keeps working after the original file moved away.
-	 */
-	hydrate: (record: TranscriptRecord, savedPath: string, audioPath?: string | null, source?: ProjectSource) => string | null
-	/** Inline edit of one segment's text. Persists to the job's saved file when it has one. */
-	updateSegmentText: (jobId: string, segmentIndex: number, text: string) => void
-	/** Rename the visible project and its persisted record, when one exists. */
-	renameJob: (jobId: string, name: string) => Promise<boolean>
-	/** Update the visible title while the inline rename editor is open. */
-	previewJobName: (jobId: string, name: string) => void
-	/** Attach an AI summary to a job. Persists to the job's saved file when it has one. */
-	setJobSummary: (jobId: string, summary: string) => void
-	/** Replace the question-and-answer thread of a job. Persists like the summary. */
-	setJobThread: (jobId: string, thread: AiThreadEntry[]) => void
-	/** Name one diarized speaker; an empty name restores "Speaker N". Persists like the segment edits. */
-	setSpeakerName: (jobId: string, speaker: number, name: string) => void
-	/** Attribute one line to a speaker: a line diarization missed, or one it got wrong. */
-	setSegmentSpeaker: (jobId: string, segmentIndex: number, speaker: number) => void
-	cancelCurrent: () => void
-	cancelAll: () => void
-	reset: () => void
-	/** Progress across a run of several files, null for a single file or when idle. */
-	batch: BatchProgress | null
-	/** The finished card's content, until dismissed. */
-	batchSummary: BatchSummary | null
-	dismissBatchSummary: () => void
-	/** Finished jobs auto-export has not written yet: the count behind "Export all". */
-	unexportedCount: number
-	/** Export every finished job that has nothing written yet, with the current settings. */
-	exportFinished: () => Promise<void>
-}
-
+import type { BatchProgress, BatchSummary, EnqueueItem, Job, TranscribeQueue } from './transcribe-queue-types'
+export type { BatchProgress, BatchSummary, EnqueueItem, Job, JobStatus, TranscribeQueue } from './transcribe-queue-types'
 let jobCounter = 0
 function nextJobId() {
 	jobCounter += 1
@@ -145,6 +45,7 @@ function nextJobId() {
 
 /** Options shared by every file of a run (diarize / vad model paths). */
 async function buildSharedOptions(preference: Preference) {
+	if (preference.modelMetadata?.capabilities.engine === 'qwen3-asr') return {}
 	const requiresVad = preference.modelMetadata?.capabilities.requires_vad ?? false
 	const needsFolder = preference.diarizeEnabled || preference.stableTimestampsEnabled || requiresVad
 	const modelsFolder = needsFolder ? await invoke<string>('get_models_folder') : null
@@ -154,7 +55,6 @@ async function buildSharedOptions(preference: Preference) {
 		...(preference.stableTimestampsEnabled ? { stable_timestamps: true } : {}),
 	}
 }
-
 /** Reload the current model on the CPU. False when even that failed, so the original error stands. */
 async function reloadOnCpu(preference: Preference): Promise<boolean> {
 	try {
@@ -204,6 +104,7 @@ export async function reconcileProjectName(
 export function useTranscribeQueue(): TranscribeQueue {
 	const preference = usePreferenceProvider()
 	const preferenceRef = useRef(preference)
+	const runPreferenceRef = useRef<Preference | null>(null)
 	const { setState: setErrorModal } = useContext(ErrorModalContext)
 
 	const [jobs, setJobs] = useState<Job[]>([])
@@ -335,8 +236,9 @@ export function useTranscribeQueue(): TranscribeQueue {
 				projectsPath: current.projectsPath,
 				moveSourceMedia: job.source === 'record' || job.source === 'url',
 				segments,
-				language: current.modelOptions.lang,
-				modelPath: current.modelPath,
+				language: job.language ?? current.modelOptions.lang,
+				modelPath: job.modelPath ?? current.modelPath,
+				sourceUrl: job.sourceUrl,
 			}).then((saved) => {
 				if (!saved) return
 				// Vibe-owned staging media may be gone now; switch playback to the durable project copy
@@ -362,6 +264,7 @@ export function useTranscribeQueue(): TranscribeQueue {
 	const runLoop = useCallback(async () => {
 		if (runningRef.current) return
 		runningRef.current = true
+		const unlockModel = lockModel()
 		setRunning(true)
 		abortAllRef.current = false
 		setIsAborting(false)
@@ -379,7 +282,7 @@ export function useTranscribeQueue(): TranscribeQueue {
 		}
 
 		try {
-			const current = preferenceRef.current
+			const current = runPreferenceRef.current ?? preferenceRef.current
 			if (!current.modelPath) {
 				failPending(m.noModelSelected())
 				toast.error(m.noModelSelected(), { position: 'bottom-center' })
@@ -423,7 +326,7 @@ export function useTranscribeQueue(): TranscribeQueue {
 					const result = await invoke<Transcript>('transcribe', {
 						options: {
 							path: next.path,
-							...withoutUnsupportedOptions(preferenceRef.current.modelOptions, preferenceRef.current.modelMetadata?.capabilities),
+							...withoutUnsupportedOptions(current.modelOptions, current.modelMetadata?.capabilities),
 							...shared,
 						},
 					})
@@ -438,7 +341,14 @@ export function useTranscribeQueue(): TranscribeQueue {
 						// re-read the live path so completion can never target the folder's old name.
 						void serializeProjectOperation(next.id, async () => {
 							const savedPath = jobsRef.current.find((candidate) => candidate.id === next.id)?.savedPath
-							if (savedPath && (await updateTranscriptSegments(savedPath, result.segments))) notifyTranscriptsChanged()
+							if (
+								savedPath &&
+								(await updateTranscriptSegments(savedPath, result.segments, {
+									modelPath: current.modelPath,
+									language: current.modelOptions.lang,
+								}))
+							)
+								notifyTranscriptsChanged()
 						})
 					} else {
 						persist(next, result.segments)
@@ -497,6 +407,8 @@ export function useTranscribeQueue(): TranscribeQueue {
 			activeIdRef.current = null
 			setActiveId(null)
 			runningRef.current = false
+			runPreferenceRef.current = null
+			unlockModel()
 			setRunning(false)
 			setIsAborting(false)
 
@@ -561,7 +473,14 @@ export function useTranscribeQueue(): TranscribeQueue {
 			const job = jobsRef.current.find((candidate) => candidate.id === jobId)
 			if (!job?.hydrated || !job.savedPath || !job.path || !['done', 'error', 'cancelled'].includes(job.status) || job.segments.length > 0) return
 			pinnedRef.current = true
-			commit(jobsRef.current.map((candidate) => (candidate.id === jobId ? { ...candidate, status: 'queued', progress: 0, error: undefined } : candidate)))
+			const current = runPreferenceRef.current ?? preferenceRef.current
+			commit(
+				jobsRef.current.map((candidate) =>
+					candidate.id === jobId
+						? { ...candidate, modelPath: current.modelPath, language: current.modelOptions.lang, status: 'queued', progress: 0, error: undefined }
+						: candidate,
+				),
+			)
 			select(jobId)
 			void runLoop()
 		},
@@ -569,13 +488,16 @@ export function useTranscribeQueue(): TranscribeQueue {
 	)
 
 	const enqueue = useCallback(
-		(files: EnqueueItem[]) => {
+		(files: EnqueueItem[], snapshot?: Preference) => {
 			const accepted = files.filter((file) => validPath(file.path.toLowerCase()))
 			if (accepted.length === 0) {
 				if (files.length > 0) toast.error(m.supportsFormats(), { position: 'bottom-center' })
 				return
 			}
 
+			if (!runningRef.current)
+				runPreferenceRef.current = snapshot ?? { ...preferenceRef.current, modelOptions: { ...preferenceRef.current.modelOptions } }
+			const options = runPreferenceRef.current ?? preferenceRef.current
 			const created: Job[] = accepted.map((file) => ({
 				id: nextJobId(),
 				// A re-transcribed project keeps its own title: prefixing it again would grow
@@ -583,6 +505,9 @@ export function useTranscribeQueue(): TranscribeQueue {
 				name: file.projectName ?? autoProjectName(file.name, file.source ?? 'file'),
 				path: file.path,
 				source: file.source ?? 'file',
+				sourceUrl: file.sourceUrl,
+				modelPath: options.modelPath,
+				language: options.modelOptions.lang,
 				status: 'queued',
 				progress: 0,
 				segments: [],
@@ -607,6 +532,9 @@ export function useTranscribeQueue(): TranscribeQueue {
 				// The project folder's own copy of the media, else the original path it came from.
 				path: audioPath || record.sourcePath,
 				source,
+				sourceUrl: record.sourceUrl,
+				modelPath: record.modelPath,
+				language: record.language,
 				status: 'done',
 				progress: 100,
 				segments: record.segments,

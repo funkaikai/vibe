@@ -6,6 +6,8 @@ pub mod download;
 pub mod files;
 pub mod handoff_cmd;
 pub mod keepawake_cmd;
+pub mod media_download;
+pub mod media_input;
 pub mod permissions;
 pub mod server_cmd;
 pub mod skill;

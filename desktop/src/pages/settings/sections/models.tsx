@@ -11,12 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { ActionRow, IconAction, SettingsGroup, SettingsRow, rowControlClass, type SettingsViewModel } from './shared'
 import { getFriendlyModelName } from '~/lib/model'
 import { ModelGlyph } from '~/components/brand-glyph'
+import { isQwenModelPath } from '~/lib/qwen'
+import { QwenModelSection } from './qwen-model'
+import { useModelLocked } from '~/lib/model-lock'
 
 export function ModelsSection({ vm }: { vm: SettingsViewModel }) {
 	const [editingPath, setEditingPath] = useState<string | null>(null)
 	const [editingName, setEditingName] = useState('')
+	const [qwenBusy, setQwenBusy] = useState(false)
+	const modelLocked = useModelLocked()
 	const currentModel = vm.models.find((model) => model.path === vm.preference.modelPath)
 	const isRenaming = Boolean(currentModel && editingPath === currentModel.path)
+	const qwenSelected = isQwenModelPath(vm.preference.modelPath ?? '')
 
 	function commitRename() {
 		if (!currentModel) return
@@ -33,6 +39,7 @@ export function ModelsSection({ vm }: { vm: SettingsViewModel }) {
 
 	return (
 		<div className="space-y-6">
+			{modelLocked && <p className="text-xs text-muted-foreground">任务处理中，语音模型暂时无法切换</p>}
 			<SettingsGroup>
 				<SettingsRow label={m.selectModel()}>
 					{isRenaming ? (
@@ -53,6 +60,7 @@ export function ModelsSection({ vm }: { vm: SettingsViewModel }) {
 					) : (
 						<>
 							<Select
+								disabled={qwenBusy || modelLocked}
 								value={vm.preference.modelPath ?? undefined}
 								onValueChange={vm.selectModel}
 								onOpenChange={(open) => {
@@ -91,12 +99,19 @@ export function ModelsSection({ vm }: { vm: SettingsViewModel }) {
 				</SettingsRow>
 			</SettingsGroup>
 
+			{vm.isMacOS && <QwenModelSection vm={vm} onBusyChange={setQwenBusy} />}
+
 			<SettingsGroup title={m.settingsHardware()}>
 				<SettingsRow label={m.transcribeOnCpu()} description={m.transcribeOnCpuInfo()}>
-					<Switch checked={vm.preference.noGpu} onCheckedChange={vm.preference.setNoGpu} aria-label={m.transcribeOnCpu()} />
+					<Switch
+						checked={qwenSelected || vm.preference.noGpu}
+						disabled={qwenSelected}
+						onCheckedChange={vm.preference.setNoGpu}
+						aria-label={m.transcribeOnCpu()}
+					/>
 				</SettingsRow>
 
-				{!vm.isMacOS && !vm.preference.noGpu && (
+				{!vm.isMacOS && !vm.preference.noGpu && !qwenSelected && (
 					<SettingsRow label={m.gpuDevice()}>
 						{vm.gpuDevices.length > 0 ? (
 							<Select
@@ -131,17 +146,28 @@ export function ModelsSection({ vm }: { vm: SettingsViewModel }) {
 				)}
 			</SettingsGroup>
 
-			{vm.corruptModels.length > 0 && (
+			{vm.corruptModels.some((model) => !isQwenModelPath(model.path)) && (
 				<SettingsGroup title={m.modelFileCorrupt()}>
-					{vm.corruptModels.map((model) => (
-						<SettingsRow
-							key={model.path}
-							label={getFriendlyModelName(model.name)}
-							description={m.modelFileCorruptDescription({ name: model.name })}>
-							<IconAction label={m.reDownload()} icon={<Download className="h-4 w-4" />} onClick={() => vm.redownloadModel(model)} />
-							<IconAction label={m.showInFolder()} icon={<FolderOpen className="h-4 w-4" />} onClick={() => vm.openSelectedModel(model.path)} />
-						</SettingsRow>
-					))}
+					{vm.corruptModels
+						.filter((model) => !isQwenModelPath(model.path))
+						.map((model) => (
+							<SettingsRow
+								key={model.path}
+								label={getFriendlyModelName(model.name)}
+								description={m.modelFileCorruptDescription({ name: model.name })}>
+								<IconAction
+									label={m.reDownload()}
+									icon={<Download className="h-4 w-4" />}
+									onClick={() => vm.redownloadModel(model)}
+									disabled={qwenBusy || modelLocked}
+								/>
+								<IconAction
+									label={m.showInFolder()}
+									icon={<FolderOpen className="h-4 w-4" />}
+									onClick={() => vm.openSelectedModel(model.path)}
+								/>
+							</SettingsRow>
+						))}
 				</SettingsGroup>
 			)}
 
@@ -149,17 +175,28 @@ export function ModelsSection({ vm }: { vm: SettingsViewModel }) {
 				<SettingsRow label={m.downloadModel()}>
 					<Input
 						type="text"
+						disabled={qwenBusy || modelLocked}
 						value={vm.downloadURL}
 						onChange={(event) => vm.setDownloadURL(event.target.value)}
 						placeholder={m.pasteModelLink()}
 						onKeyDown={(event) => (event.key === 'Enter' ? vm.downloadModel() : null)}
 						className={`w-56 ${rowControlClass}`}
 					/>
-					<IconAction label={m.downloadModel()} icon={<Download className="h-4 w-4" />} onClick={vm.downloadModel} disabled={!vm.downloadURL} />
+					<IconAction
+						label={m.downloadModel()}
+						icon={<Download className="h-4 w-4" />}
+						onClick={vm.downloadModel}
+						disabled={!vm.downloadURL || qwenBusy}
+					/>
 				</SettingsRow>
 				<ActionRow label={m.downloadModelsLink()} icon={<LinkIcon className="h-4 w-4" />} onClick={vm.openModelsUrl} />
 				<ActionRow label={m.modelsFolder()} icon={<FolderIcon className="h-4 w-4" />} onClick={vm.openModelPath} />
-				<ActionRow label={m.changeModelsFolder()} icon={<WrenchIcon className="h-4 w-4" />} onClick={vm.changeModelsFolder} />
+				<ActionRow
+					label={m.changeModelsFolder()}
+					icon={<WrenchIcon className="h-4 w-4" />}
+					onClick={vm.changeModelsFolder}
+					disabled={qwenBusy || modelLocked}
+				/>
 			</SettingsGroup>
 		</div>
 	)

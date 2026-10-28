@@ -1,18 +1,15 @@
 import { listen } from '@tauri-apps/api/event'
-import { AnimatePresence, motion } from 'framer-motion'
-import { FolderOpen, Link2, Mic, Plus, Square, Upload, X } from 'lucide-react'
-import { siFacebook, siInstagram, siTiktok, siX, siYoutube } from 'simple-icons'
+import { ArrowUp, Check, FileAudio2, FolderOpen, Globe2, Link2, Mic, RefreshCw, SlidersHorizontal, Square, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { m } from '~/paraglide/messages.js'
 import AudioDeviceInput from '~/components/audio-device-input'
 import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
 import { Spinner } from '~/components/ui/spinner'
-import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
+import { openSettingsSection } from '~/lib/app'
 import { cn } from '~/lib/style'
-import { parseMediaLinks } from '~/lib/ytdlp'
-import { useSession, type IdlePanel } from '../session'
-import QuietRow from './quiet-row'
+import type { MediaInputItem } from '../hooks/use-media-composer'
+import { useSession } from '../session'
+import MediaModelPicker from './media-model-picker'
 
 function formatElapsed(seconds: number) {
 	const minutes = Math.floor(seconds / 60)
@@ -80,28 +77,6 @@ function LevelMeter() {
 	)
 }
 
-/** One segment of the joined source switcher: icon-only keys, the active one reads as raised. */
-function Segment({ active, label, onClick, children }: { active?: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
-	return (
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<button
-					type="button"
-					aria-pressed={active}
-					aria-label={label}
-					onClick={onClick}
-					className={cn(
-						'inline-flex h-10 w-14 cursor-pointer items-center justify-center rounded-full transition-colors duration-150',
-						active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-					)}>
-					{children}
-				</button>
-			</TooltipTrigger>
-			<TooltipContent side="bottom">{label}</TooltipContent>
-		</Tooltip>
-	)
-}
-
 function RecordPanel() {
 	const { recording, recordElapsed, preference } = useSession()
 
@@ -148,252 +123,252 @@ function RecordPanel() {
 	)
 }
 
-// Bundled monochrome brand marks of the most-used yt-dlp sources — fills the panel with a
-// "works with" row instead of dead space. Rendered tiny and muted so it stays quiet.
-const linkSources: { title: string; path: string }[] = [
-	{ title: siYoutube.title, path: siYoutube.path },
-	{ title: siTiktok.title, path: siTiktok.path },
-	{ title: siInstagram.title, path: siInstagram.path },
-	{ title: siX.title, path: siX.path },
-	{ title: siFacebook.title, path: siFacebook.path },
-]
+const stageLabels: Record<MediaInputItem['stage'], string> = {
+	queued: '等待处理',
+	parsing: '正在解析输入',
+	downloading: '正在下载媒体',
+	preparing: '正在准备音频',
+	ready: '已加入本地转写',
+	error: '处理失败',
+	cancelled: '已取消',
+}
 
-function LinkPanel() {
-	const { link, preference } = useSession()
-
-	if (link.downloadingAudio) {
-		const percent = link.ytdlpProgress ?? 0
-		// yt-dlp reports nothing until the stream starts; show motion rather than a stuck 0%.
-		const started = percent > 0
-		return (
-			<div className="flex w-full flex-col items-center gap-4 py-2.5">
-				<span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-background/70 text-foreground shadow-sm">
-					<span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-foreground/5" />
-					<Link2 className="h-5 w-5" />
-				</span>
-
-				<div className="w-full max-w-sm space-y-2">
-					<div className="flex items-baseline justify-between gap-3">
-						<span className="truncate text-[13px] font-medium text-foreground">{m.downloading({ progress: String(percent) })}</span>
-						<span className="shrink-0 font-mono text-[12px] tabular-nums text-muted-foreground">{started ? `${percent}%` : '—'}</span>
-					</div>
-
-					<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-						{started ? (
-							<div className="h-full rounded-full bg-foreground transition-[width] duration-300 ease-out" style={{ width: `${percent}%` }} />
-						) : (
-							// Indeterminate: a short bar sweeping the track while we wait for the first byte.
-							<div className="download-sweep h-full w-1/3 rounded-full bg-foreground/70" />
-						)}
-					</div>
-
-					{link.batch && (
-						<p dir="ltr" className="truncate text-center text-[12px] text-muted-foreground/80">
-							{link.batch.total > 1 && (
-								<span className="me-2 font-medium text-muted-foreground">
-									{m.linkOfTotal({ current: String(link.batch.index + 1), total: String(link.batch.total) })}
-								</span>
-							)}
-							{link.batch.url}
-						</p>
-					)}
+/** Also stays visible above the result view when some inputs failed before transcription. */
+export function MediaInputProgress({ compact = false }: { compact?: boolean }) {
+	const { composer, busy, browse } = useSession()
+	if (!composer.items.length && !composer.error) return null
+	const failed = composer.items.some((item) => item.stage === 'error')
+	return (
+		<section aria-label="输入处理进度" className={cn('w-full space-y-3', compact && 'mx-auto max-w-3xl px-6 py-4')}>
+			<div className="flex items-center justify-between gap-3">
+				<p className="text-xs font-medium text-muted-foreground">{composer.preparing ? '正在准备转写内容' : '输入处理记录'}</p>
+				{composer.preparing && (
+					<Button type="button" variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs" onClick={composer.cancel}>
+						取消准备
+					</Button>
+				)}
+			</div>
+			{composer.error && (
+				<p role="alert" className="rounded-xl bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+					{composer.error}
+				</p>
+			)}
+			{composer.items.length > 0 && (
+				<ul className="max-h-64 divide-y divide-border/60 overflow-y-auto rounded-2xl border border-border/70 bg-background/70">
+					{composer.items.map((item) => {
+						const active = ['parsing', 'downloading', 'preparing'].includes(item.stage)
+						const percent = active && item.progress !== null && Number.isFinite(item.progress) ? Math.max(0, Math.min(100, item.progress)) : null
+						return (
+							<li key={item.id} className="px-3.5 py-3">
+								<div className="flex items-center gap-3">
+									<span className="shrink-0 text-muted-foreground">
+										{active ? (
+											<Spinner className="h-4 w-4" />
+										) : item.stage === 'ready' ? (
+											<Check className="h-4 w-4" />
+										) : item.kind === 'file' ? (
+											<FileAudio2 className="h-4 w-4" />
+										) : (
+											<Link2 className="h-4 w-4" />
+										)}
+									</span>
+									<div className="min-w-0 flex-1">
+										<p className="truncate text-[13px] font-medium">{item.label}</p>
+										<p className={cn('mt-0.5 text-xs', item.stage === 'error' ? 'text-destructive' : 'text-muted-foreground')}>
+											{item.error ?? stageLabels[item.stage]}
+											{percent !== null ? ` · ${Math.round(percent)}%` : ''}
+										</p>
+									</div>
+									{['error', 'cancelled'].includes(item.stage) && (
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											disabled={busy}
+											aria-label={`重试 ${item.label}`}
+											className="h-8 shrink-0 rounded-full px-2 text-xs"
+											onClick={() => void composer.retry(item.id)}>
+											<RefreshCw className="h-3.5 w-3.5" />
+											重试
+										</Button>
+									)}
+								</div>
+								{percent !== null && (
+									<div
+										role="progressbar"
+										aria-label={`${item.label}进度`}
+										aria-valuemin={0}
+										aria-valuemax={100}
+										aria-valuenow={Math.round(percent)}
+										className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+										<div className="h-full rounded-full bg-foreground/70 transition-[width]" style={{ width: `${percent}%` }} />
+									</div>
+								)}
+							</li>
+						)
+					})}
+				</ul>
+			)}
+			{(failed || composer.error) && (
+				<div className="flex flex-wrap gap-1.5">
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						disabled={busy}
+						className="h-8 rounded-full text-xs"
+						onClick={() => openSettingsSection('ai')}>
+						配置文本模型
+					</Button>
+					<Button type="button" variant="ghost" size="sm" disabled={busy} className="h-8 rounded-full text-xs" onClick={() => void browse()}>
+						<FolderOpen className="h-3.5 w-3.5" />
+						选择本地文件
+					</Button>
 				</div>
+			)}
+		</section>
+	)
+}
 
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={() => link.cancelYtDlpDownload()}
-					className="h-8 rounded-full px-4 text-[13px] font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-					{m.cancel()}
-				</Button>
+export default function IdleHero() {
+	const { composer, preference, busy, browse, dragging, collectingFolder, panel, setPanel, recording } = useSession()
+	const [modelChanging, setModelChanging] = useState(false)
+	const composing = useRef(false)
+	const disabled = busy || modelChanging || collectingFolder || !preference.modelPath || (!composer.text.trim() && composer.files.length === 0)
+
+	if (panel === 'record' || recording.isRecording) {
+		return (
+			<div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-5 px-6 pb-[20vh]">
+				<div className="rounded-3xl border border-border bg-muted/20 p-7">
+					<RecordPanel />
+				</div>
+				{!recording.isRecording && (
+					<Button type="button" variant="ghost" onClick={() => setPanel('none')}>
+						返回转写首页
+					</Button>
+				)}
 			</div>
 		)
 	}
 
 	return (
-		<motion.div layout className="flex w-full flex-col items-center gap-5 py-2.5">
-			<motion.div layout="position" className="flex w-full items-center gap-3">
-				<div className="relative min-w-0 flex-1">
-					<Input
-						type="text"
-						value={link.audioUrl}
-						onChange={(event) => link.setAudioUrl(event.target.value)}
-						onKeyDown={(event) => (event.key === 'Enter' ? void link.downloadAudio() : null)}
-						// Several links pasted together go straight into the list; one stays in the box.
-						onPaste={(event) => {
-							const pasted = event.clipboardData.getData('text')
-							if (parseMediaLinks(pasted).length < 2) return
-							event.preventDefault()
-							link.queueLinks(`${link.audioUrl} ${pasted}`)
+		<div className="min-h-0 flex-1 overflow-y-auto">
+			<div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center gap-6 px-6 pt-8 pb-[clamp(2rem,12vh,8rem)]">
+				<div className="space-y-2.5 text-center">
+					<h1 className="text-[28px] font-semibold tracking-tight text-foreground sm:text-[32px]">把音视频变成文字</h1>
+					<p className="text-sm text-muted-foreground">从一段分享、一条链接，或一份本地文件开始</p>
+				</div>
+				<div
+					className={cn(
+						'relative rounded-[26px] border bg-background shadow-[0_4px_24px_rgba(0,0,0,0.045)] transition-colors focus-within:border-foreground/25',
+						dragging && !busy ? 'border-primary bg-primary/5 ring-4 ring-primary/10' : 'border-border',
+					)}>
+					{dragging && !busy && (
+						<div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-[26px] bg-background/95 text-sm font-medium">
+							松开以添加音视频文件
+						</div>
+					)}
+					<textarea
+						aria-label="链接或分享文案"
+						placeholder="粘贴视频链接或分享文案，也可以选择音视频文件"
+						value={composer.text}
+						disabled={busy}
+						rows={3}
+						maxLength={16000}
+						onChange={(event) => composer.setText(event.target.value)}
+						onCompositionStart={() => {
+							composing.current = true
 						}}
-						// Short enough to stay fully readable when the window is narrow.
-						placeholder={link.queuedLinks.length ? m.pasteAnotherLink() : m.pasteMediaLink()}
-						className={cn('h-10 min-w-0 rounded-xl px-3.5 text-sm', link.audioUrl && 'pe-10')}
+						onCompositionEnd={() => {
+							composing.current = false
+						}}
+						onKeyDown={(event) => {
+							if (
+								event.key !== 'Enter' ||
+								!event.metaKey ||
+								composing.current ||
+								event.nativeEvent.isComposing ||
+								event.nativeEvent.keyCode === 229
+							)
+								return
+							event.preventDefault()
+							if (!disabled) void composer.submit()
+						}}
+						className="block max-h-72 min-h-[126px] w-full resize-y rounded-t-[26px] bg-transparent px-5 pt-5 pb-3 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/65 disabled:opacity-60 sm:px-6"
 					/>
-					{/* The way to build a list by hand: park this link and type the next one. */}
-					{link.audioUrl && (
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<button
-									type="button"
-									aria-label={m.addLink()}
-									onClick={() => link.queueLinks()}
-									className="absolute end-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/80">
-									<Plus className="h-4 w-4" />
-								</button>
-							</TooltipTrigger>
-							<TooltipContent>{m.addLink()}</TooltipContent>
-						</Tooltip>
-					)}
-				</div>
-				<Button
-					onClick={() => link.downloadAudio()}
-					disabled={!preference.modelPath || link.pendingLinks.length === 0}
-					// Wide enough for the count, so the box beside it never changes size.
-					className="h-10 w-32 shrink-0 rounded-xl px-4 disabled:opacity-40">
-					{m.transcribe()}
-					{link.pendingLinks.length > 1 && (
-						<span className="rounded-full bg-primary-foreground/20 px-1.5 text-[11px] font-semibold tabular-nums">{link.pendingLinks.length}</span>
-					)}
-				</Button>
-			</motion.div>
-
-			{/* Links waiting their turn, each removable until the run starts. The list keeps the */}
-			{/* card's width and scrolls vertically once it holds more than a few, so nothing else */}
-			{/* moves; rows slide in and out, and the card's own re-centring is animated with them. */}
-			<AnimatePresence initial={false}>
-				{link.queuedLinks.length > 0 && (
-					<motion.ul key="queued-links" layout className="flex max-h-28 w-full flex-col gap-1 overflow-y-auto overscroll-contain">
-						<AnimatePresence initial={false}>
-							{link.queuedLinks.map((url) => (
-								<motion.li
-									key={url}
-									layout
-									initial={{ height: 0, opacity: 0 }}
-									animate={{ height: 'auto', opacity: 1 }}
-									exit={{ height: 0, opacity: 0 }}
-									transition={{ duration: 0.18, ease: 'easeOut' }}
-									className="group shrink-0 overflow-hidden rounded-lg text-[13px] text-muted-foreground transition-colors duration-150 hover:bg-muted/60">
-									<div className="flex items-center gap-2.5 px-2 py-1">
-										<Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
-										<span dir="ltr" className="min-w-0 flex-1 truncate text-start text-foreground/90">
-											{url}
-										</span>
-										<button
-											type="button"
-											aria-label={m.removeLink()}
-											onClick={() => link.removeQueuedLink(url)}
-											className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 hover:bg-muted hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/80">
-											<X className="h-3.5 w-3.5" />
-										</button>
-									</div>
-								</motion.li>
+					{composer.files.length > 0 && (
+						<ul aria-label="待转写文件" className="flex flex-wrap gap-2 px-5 pb-3 sm:px-6">
+							{composer.files.map((file) => (
+								<li
+									key={file.path}
+									className="flex max-w-full items-center gap-2 rounded-xl border border-border/70 bg-muted/40 py-2 ps-3 pe-1.5">
+									<FileAudio2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+									<span className="max-w-52 truncate text-xs">{file.name}</span>
+									<Button
+										type="button"
+										variant="ghost"
+										size="iconSm"
+										disabled={busy}
+										aria-label={`移除 ${file.name}`}
+										onClick={() => composer.removeFile(file.path)}
+										className="h-6 w-6 rounded-full">
+										<X className="h-3 w-3" />
+									</Button>
+								</li>
 							))}
-						</AnimatePresence>
-					</motion.ul>
-				)}
-			</AnimatePresence>
-
-			<motion.div layout="position" className="flex flex-col items-center gap-3">
-				<p className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground/80 uppercase">{m.worksWith()}</p>
-				<div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-muted-foreground/70">
-					{linkSources.map((source) => (
-						<Tooltip key={source.title}>
-							<TooltipTrigger asChild>
-								<svg
-									viewBox="0 0 24 24"
-									aria-label={source.title}
-									role="img"
-									className="h-[18px] w-[18px] transition-colors duration-150 hover:text-foreground">
-									<path d={source.path} fill="currentColor" />
-								</svg>
-							</TooltipTrigger>
-							<TooltipContent side="bottom">{source.title}</TooltipContent>
-						</Tooltip>
-					))}
-					<span className="text-[12px] text-muted-foreground/70">{m.moreSources()}</span>
-				</div>
-			</motion.div>
-		</motion.div>
-	)
-}
-
-export default function IdleHero() {
-	const { dragging, browse, collectingFolder, panel, setPanel, link, recording } = useSession()
-
-	function selectPanel(next: IdlePanel) {
-		if (recording.isRecording || next === panel) return
-		setPanel(next)
-		if (next === 'link') void link.switchToLinkTab()
-	}
-
-	return (
-		// One optical column: pills, active source and quiet row all span max-w-xl with a 20px rhythm.
-		// The extra bottom padding lifts the column above the true centre — optically centred reads better.
-		<div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-5 px-6 pt-4 pb-[30vh]">
-			{/* Joined source switcher: one control, three keys; the active source replaces the drop area. */}
-			<div className="mx-auto inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 p-1">
-				<Segment active={panel === 'none'} label={m.fromFile()} onClick={() => selectPanel('none')}>
-					<FolderOpen className="h-[18px] w-[18px]" />
-				</Segment>
-				<Segment active={panel === 'record'} label={m.record()} onClick={() => selectPanel('record')}>
-					<Mic className="h-[18px] w-[18px]" />
-				</Segment>
-				<Segment active={panel === 'link'} label={m.fromLink()} onClick={() => selectPanel('link')}>
-					<Link2 className="h-[18px] w-[18px]" />
-				</Segment>
-			</div>
-
-			{/* Fixed-height slot sized to the drop zone so switching sources never moves the pills or the quiet row. */}
-			<div className="flex min-h-[220px] w-full flex-col justify-center">
-				<AnimatePresence mode="wait" initial={false}>
-					{panel === 'none' ? (
-						<motion.button
-							key="drop"
-							type="button"
-							onClick={() => void browse()}
-							initial={{ opacity: 0, y: 6 }}
-							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: -6 }}
-							transition={{ duration: 0.18, ease: 'easeOut' }}
-							className={cn(
-								'group relative cursor-pointer overflow-hidden rounded-[1.25rem] border-2 border-dashed transition-colors duration-150',
-								dragging ? 'border-foreground/40' : 'border-border bg-muted/30 hover:border-foreground/25 hover:bg-muted/50',
-							)}>
-							{/* The aurora is drag feedback only — at rest the zone stays a quiet surface. */}
-							<div
-								className={cn(
-									'aurora pointer-events-none absolute inset-0 transition-opacity duration-200',
-									dragging ? 'opacity-100' : 'opacity-0',
-								)}
-							/>
-
-							<div className="relative flex flex-col items-center gap-3.5 px-8 py-12 text-center">
-								<span className="flex h-12 w-12 items-center justify-center rounded-full bg-background/70 text-foreground shadow-sm">
-									{collectingFolder ? <Spinner className="h-5 w-5" /> : <Upload className="h-5 w-5" />}
-								</span>
-								<div className="space-y-1">
-									<h1 className="text-xl font-semibold tracking-[-0.02em] text-foreground">{m.dropFilesHere()}</h1>
-									<p className="text-[13px] text-muted-foreground">{m.orClickToBrowse()}</p>
-								</div>
-							</div>
-						</motion.button>
-					) : (
-						<motion.div
-							key={panel}
-							initial={{ opacity: 0, y: 6 }}
-							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: -6 }}
-							transition={{ duration: 0.18, ease: 'easeOut' }}
-							// Same footprint as the drop zone so the composition stays anchored.
-							className="flex min-h-[220px] w-full flex-col justify-center rounded-[1.25rem] border border-border bg-muted/30 px-7">
-							{panel === 'record' ? <RecordPanel /> : <LinkPanel />}
-						</motion.div>
+						</ul>
 					)}
-				</AnimatePresence>
+					<div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-3 sm:px-4">
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							disabled={busy || collectingFolder}
+							onClick={() => void browse()}
+							className="h-9 rounded-full px-3 text-[13px] font-medium text-muted-foreground">
+							{collectingFolder ? <Spinner className="h-4 w-4" /> : <FolderOpen className="h-4 w-4" />}
+							{collectingFolder ? '正在收集文件' : '选择文件'}
+						</Button>
+						<div className="ms-auto flex min-w-0 items-center gap-1.5">
+							<MediaModelPicker onBusyChange={setModelChanging} />
+							<Button
+								type="button"
+								size="icon"
+								disabled={disabled}
+								aria-label="开始转写"
+								title="开始转写（⌘ Enter）"
+								onClick={() => void composer.submit()}
+								className="h-9 w-9 shrink-0 rounded-full">
+								{composer.preparing ? <Spinner className="h-4 w-4" /> : <ArrowUp className="h-[18px] w-[18px]" />}
+							</Button>
+						</div>
+					</div>
+				</div>
+				<div className="-mt-3 flex flex-wrap items-center justify-between gap-2 px-2 text-xs text-muted-foreground">
+					<div className="flex items-center gap-1.5">
+						<Globe2 className="h-3.5 w-3.5" />
+						<span>中文</span>
+						<span className="mx-1 text-border">·</span>
+						<span>链接解析使用在线模型，音视频在本机转写</span>
+					</div>
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						className="h-7 rounded-full px-2 text-xs font-normal"
+						disabled={busy}
+						onClick={() => openSettingsSection('tuning')}>
+						<SlidersHorizontal className="h-3 w-3" />
+						更多选项
+					</Button>
+				</div>
+				{!preference.modelPath && (
+					<Button type="button" variant="outline" className="mx-auto rounded-full text-sm" onClick={() => openSettingsSection('models')}>
+						先选择或下载语音模型
+					</Button>
+				)}
+				<MediaInputProgress />
 			</div>
-
-			<QuietRow />
 		</div>
 	)
 }

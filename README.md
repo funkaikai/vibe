@@ -25,6 +25,17 @@
 
 <hr />
 
+## 当前 macOS Fork
+
+此分支为 Vibe Qwen，基于上游 Vibe 迭代，当前重点为 macOS Apple Silicon 本地转写、Qwen3-ASR-1.7B 模型管理，以及文件和分享链接统一输入。
+
+- [完整功能思维导图与源码索引](docs/FEATURE_MAP.md)
+- [首页输入与在线文本模型说明](HOMEPAGE.md)
+- [Qwen 模型与本地构建说明](QWEN.md)
+- [视频平台实际验收范围](plans/homepage-media-input/platform-validation.md)
+
+本地文件转写在本机完成；链接解析及可选 AI 功能会向配置的模型接口发送相应内容。下方保留上游项目介绍，当前 fork 的支持范围与限制以上述文档为准。
+
 ## Screenshots
 
 <p align="center">

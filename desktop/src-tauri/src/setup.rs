@@ -18,6 +18,7 @@ pub static STATIC_APP: Lazy<std::sync::Mutex<Option<tauri::AppHandle>>> = Lazy::
 
 pub struct ServerState {
     pub process: Option<ServerProcess>,
+    pub qwen_model: Option<std::path::PathBuf>,
 }
 
 pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
@@ -30,7 +31,10 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|_| panic!("cant create app config directory at {}", app_config_dir.display()));
 
     // Manage server state
-    app.manage(Mutex::new(ServerState { process: None }));
+    app.manage(Mutex::new(ServerState {
+        process: None,
+        qwen_model: None,
+    }));
     app.manage(crate::dictation_indicator::DictationIndicatorRuntime::default());
 
     let store = app.store(STORE_FILENAME)?;

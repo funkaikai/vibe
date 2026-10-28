@@ -1,8 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
-import { m } from '~/paraglide/messages.js'
 import Layout, { SIDEBAR_STORAGE_KEY, TOGGLE_SIDEBAR_EVENT } from '~/components/layout'
-import IdleHero from './components/idle-hero'
+import IdleHero, { MediaInputProgress } from './components/idle-hero'
 import PlayerBar from './components/player-bar'
 import RecentsSidebar from './components/recents-sidebar'
 import SessionView from './components/session-view'
@@ -39,29 +38,21 @@ function useSidebarVisible() {
 }
 
 function MainContent() {
-	const { mode, dragging } = useSession()
+	const { mode, dragging, composer, busy } = useSession()
+	const showComposer = mode === 'idle' || Boolean(composer?.preparing) || Boolean(composer?.files.length)
 
 	return (
 		<div className="relative flex h-full min-h-0 w-full min-w-0 flex-col">
-			<AnimatePresence mode="wait" initial={false}>
-				{mode === 'idle' ? (
-					<motion.div
-						key="idle"
-						exit={{ opacity: 0, y: -8 }}
-						transition={{ duration: 0.15, ease: 'easeOut' }}
-						className="flex min-h-0 flex-1 flex-col">
-						<IdleHero />
-					</motion.div>
+			<div key={showComposer ? 'idle' : 'session'} className="flex min-h-0 flex-1 flex-col">
+				{showComposer ? (
+					<IdleHero />
 				) : (
-					<motion.div
-						key="session"
-						exit={{ opacity: 0, y: -8 }}
-						transition={{ duration: 0.15, ease: 'easeOut' }}
-						className="flex min-h-0 flex-1 flex-col">
+					<>
+						{composer?.items.some((item) => item.stage === 'error' || item.stage === 'cancelled') && <MediaInputProgress compact />}
 						<SessionView />
-					</motion.div>
+					</>
 				)}
-			</AnimatePresence>
+			</div>
 
 			{/* Dropping onto a running session appends to the queue — say so. */}
 			<AnimatePresence>
@@ -73,7 +64,9 @@ function MainContent() {
 						transition={{ duration: 0.15, ease: 'easeOut' }}
 						className="pointer-events-none absolute inset-3 rounded-[1.25rem] border-2 border-dashed border-ring/40 bg-background/60 backdrop-blur-[2px]">
 						<div className="flex h-full items-center justify-center">
-							<p className="text-sm font-medium text-muted-foreground">{m.dropToAddToQueue()}</p>
+							<p className="text-sm font-medium text-muted-foreground">
+								{busy ? '任务处理中，请完成后再添加文件' : '松开以暂存文件，点击发送后开始转写'}
+							</p>
 						</div>
 					</motion.div>
 				)}

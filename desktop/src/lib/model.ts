@@ -3,6 +3,7 @@ import * as pathExt from '@tauri-apps/api/path'
 import * as fsExt from '@tauri-apps/plugin-fs'
 import { diarizeModelFilename, embeddingModelFilename, segmentModelFilename, vadModelFilename, type ModelDownload, type ModelIntegrity } from './config'
 import { lsFiles } from './fs'
+import { isQwenModelPath, listInstalledQwenModels, QWEN_MODEL_NAME } from './qwen'
 import { NamedPath } from './types'
 
 export const MODEL_EXTENSIONS = ['bin', 'gguf'] as const
@@ -37,6 +38,7 @@ export async function getFilenameFromUrl(url: string) {
 }
 
 export function getFriendlyModelName(filename: string) {
+	if (isQwenModelPath(filename)) return QWEN_MODEL_NAME
 	const name = filename.replace(MODEL_EXTENSION_PATTERN, '').replace(/^ggml[-_]?/, '')
 	if (!name || name === 'model') return 'Custom model'
 	return name.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
@@ -98,10 +100,14 @@ export function isAuxiliaryModelFile(filename: string) {
 /** Every transcription model in the folder, with truncated or corrupt ones flagged rather than hidden. */
 export async function listInstalledModels(folder?: string): Promise<InstalledModel[]> {
 	const modelsFolder = folder ?? (await getModelsFolder())
+	const qwenModels = listInstalledQwenModels(modelsFolder)
 	const files = (await lsFiles(modelsFolder)).filter((entry) => isModelFile(entry.name) && !isAuxiliaryModelFile(entry.name))
 	const checks = await checkModelFiles(files.map((file) => file.path))
 	const byPath = new Map(checks.map((check) => [check.path, check]))
-	return files.map((file) => ({ ...file, valid: byPath.get(file.path)?.valid ?? true, reason: byPath.get(file.path)?.reason ?? null }))
+	return [
+		...files.map((file) => ({ ...file, valid: byPath.get(file.path)?.valid ?? true, reason: byPath.get(file.path)?.reason ?? null })),
+		...(await qwenModels),
+	]
 }
 
 /**
@@ -174,6 +180,14 @@ export interface ModelMetadata {
 interface EngineSpecificOptions {
 	init_prompt?: string
 	translate?: boolean
+	word_timestamps?: boolean
+	stable_timestamps?: boolean
+	max_sentence_len?: number
+	sampling_strategy?: string
+	best_of?: number
+	beam_size?: number
+	temperature?: number
+	max_text_ctx?: number
 }
 
 /**
@@ -186,5 +200,15 @@ export function withoutUnsupportedOptions<T extends EngineSpecificOptions>(optio
 	const next = { ...options }
 	if (!capabilities.text_prompts) delete next.init_prompt
 	if (!capabilities.translation) delete next.translate
+	if (capabilities.engine === 'qwen3-asr') {
+		delete next.word_timestamps
+		delete next.stable_timestamps
+		delete next.max_sentence_len
+		delete next.sampling_strategy
+		delete next.best_of
+		delete next.beam_size
+		delete next.temperature
+		delete next.max_text_ctx
+	}
 	return next
 }

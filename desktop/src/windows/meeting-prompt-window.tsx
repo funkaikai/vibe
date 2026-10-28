@@ -70,7 +70,7 @@ function SourceChoice({
 }
 
 export default function MeetingPromptWindow() {
-	const configuredLocale = readConfig(CONFIG_KEYS.displayLanguage, 'en-US')
+	const configuredLocale = readConfig(CONFIG_KEYS.displayLanguage, 'zh-CN')
 	if (supportedLanguages[configuredLocale] && configuredLocale !== getLocale()) {
 		setLocale(configuredLocale as never, { reload: false })
 	}

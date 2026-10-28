@@ -19,8 +19,8 @@ export function useDeepLinks({ setFiles }: UseDeepLinksProps) {
 	async function processURLs(urls: string[]): Promise<void> {
 		const newFiles: NamedPath[] = []
 		for (let url of urls) {
-			if (url.startsWith('vibe://download/?url=')) {
-				const downloadURL = url.replace('vibe://download/?url=', '')
+			if (url.startsWith('vibe-qwen://download/?url=')) {
+				const downloadURL = url.replace('vibe-qwen://download/?url=', '')
 				const host = new URL(downloadURL).hostname
 				const confirm = await ask(`${m.askForDownloadModel()} ${host}`, { kind: 'info', title: m.downloadModel() })
 				if (confirm) {

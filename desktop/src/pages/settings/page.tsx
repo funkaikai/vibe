@@ -242,12 +242,15 @@ export default function SettingsPage({ setVisible, scrollTo }: SettingsPageProps
 
 							{!subpage && activeSection === 'dictation' && <DictationSection vm={vm} onOpenCleanup={() => openSubpage('ai-dictation')} />}
 
-							{activeSection === 'phone' && (
-								<PhoneSection
-									pairingOpen={subpage === 'phone-pairing'}
-									onPairingChange={(open) => navigateInside(open ? 'phone-pairing' : null)}
-								/>
-							)}
+							{activeSection === 'phone' &&
+								(vm.preference.modelMetadata?.capabilities.engine === 'qwen3-asr' ? (
+									<p className="text-sm text-muted-foreground">当前 Qwen 模型仅支持本机转写，暂不支持手机接力。</p>
+								) : (
+									<PhoneSection
+										pairingOpen={subpage === 'phone-pairing'}
+										onPairingChange={(open) => navigateInside(open ? 'phone-pairing' : null)}
+									/>
+								))}
 
 							{!subpage && activeSection === 'api' && <ApiSection vm={vm} />}
 

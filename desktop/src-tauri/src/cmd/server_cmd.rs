@@ -3,6 +3,7 @@ use crate::setup::ServerState;
 use eyre::{bail, Context, ContextCompat, Result};
 use std::path::PathBuf;
 use tauri::{Manager, State};
+use tauri_plugin_store::StoreExt;
 use tokio::sync::Mutex;
 
 pub fn resolve_server_binary(app_handle: &tauri::AppHandle) -> Result<PathBuf> {
@@ -82,6 +83,15 @@ pub async fn load_model(
     let no_gpu = no_gpu.unwrap_or(false);
     let server_state: State<'_, Mutex<ServerState>> = app_handle.state();
     let mut state_guard = server_state.lock().await;
+
+    let path = PathBuf::from(&model_path);
+    if path.is_dir() {
+        crate::qwen::resolve_binary(&app_handle)?;
+        tokio::task::spawn_blocking(move || crate::qwen::model::validate(&path)).await??;
+        state_guard.process = None;
+        state_guard.qwen_model = Some(PathBuf::from(&model_path));
+        return Ok(model_path);
+    }
 
     let process_is_alive = state_guard
         .process
@@ -184,8 +194,10 @@ pub async fn load_model(
         }
     };
     if gpu_fallback {
+        state_guard.qwen_model = None;
         Ok("gpu_fallback".to_string())
     } else {
+        state_guard.qwen_model = None;
         Ok(model_path)
     }
 }
@@ -199,6 +211,10 @@ pub async fn get_gpu_devices(app_handle: tauri::AppHandle) -> Result<Vec<crate::
 
 #[tauri::command]
 pub async fn get_model_metadata(app_handle: tauri::AppHandle, model_path: String) -> Result<crate::server::ModelMetadata> {
+    let path = PathBuf::from(&model_path);
+    if path.is_dir() {
+        return crate::qwen::model::metadata(&path);
+    }
     let server_state: State<'_, Mutex<ServerState>> = app_handle.state();
     let mut state = server_state.lock().await;
     if state.process.as_mut().is_none_or(|process| !process.is_alive()) {
@@ -228,6 +244,16 @@ pub async fn start_api_server(
     unload_timeout_minutes: u32,
 ) -> Result<String> {
     let mut state_guard = server_state.lock().await;
+    let selected_model = app_handle
+        .store(crate::config::STORE_FILENAME)?
+        .get("model.path")
+        .and_then(|value| value.as_str().map(PathBuf::from));
+    if selected_model
+        .as_ref()
+        .is_some_and(|path| path.file_name().is_some_and(|name| name == "Qwen3-ASR-1.7B"))
+    {
+        bail!("当前 Qwen 模型仅支持本机转写，暂不提供 HTTP API");
+    }
     let cpu_variant = crate::cmd::config::cpu_variant(&app_handle);
     if state_guard
         .process
@@ -255,6 +281,7 @@ pub async fn start_api_server(
 #[tauri::command]
 pub async fn stop_api_server(app_handle: tauri::AppHandle, server_state: State<'_, Mutex<ServerState>>) -> Result<bool> {
     let mut state_guard = server_state.lock().await;
+    state_guard.qwen_model = None;
     // The port dies with the process, so the hint in the config file has to go with it.
     crate::cmd::config::set_api_base_url(&app_handle, None).log_error();
     if let Some(mut process) = state_guard.process.take() {

@@ -11,6 +11,7 @@ import * as config from '~/lib/config'
 import { NamedPath } from '~/lib/types'
 import { getIssueUrl, resetApp } from '~/lib/app'
 import { usePreferenceProvider } from '~/providers/preference'
+import { isModelLocked } from '~/lib/model-lock'
 import { useModelGates } from '~/providers/model-gates'
 import { useToastProvider } from '~/providers/toast'
 import { testConnection } from '~/lib/ai'
@@ -194,6 +195,10 @@ export function viewModel() {
 
 	/** Replace a broken model in place, so a retry never leaves a second copy next to the bad file. */
 	function redownloadModel(model: InstalledModel) {
+		if (model.name === 'Qwen3-ASR-1.7B') {
+			window.dispatchEvent(new CustomEvent('vibe:open-settings', { detail: { scrollTo: 'models' } }))
+			return
+		}
 		navigate('/setup', { state: { replacePath: model.path } })
 	}
 
@@ -245,8 +250,9 @@ export function viewModel() {
 	}
 
 	async function selectModel(modelPath: string) {
+		if (isModelLocked()) return
 		const metadata = await readModelMetadata(modelPath)
-		if (!(await ensureRequiredVad(metadata))) return
+		if (!(await ensureRequiredVad(metadata)) || isModelLocked()) return
 		preference.setModelMetadata(metadata)
 		applyModelLanguage(metadata)
 		preference.setModelPath(modelPath)

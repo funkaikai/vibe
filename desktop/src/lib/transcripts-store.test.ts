@@ -73,7 +73,7 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
 	readDir: async () => [],
 }))
 
-import { readTranscript, renameTranscript, resolveProjectAudio, saveTranscript } from './transcripts-store'
+import { publicSourceUrl, readTranscript, renameTranscript, resolveProjectAudio, saveTranscript, transcriptsFolder } from './transcripts-store'
 
 const createdAt = new Date(2026, 7, 26, 10, 20, 30)
 const segments = [{ start: 0, stop: 100, text: 'Hello' }]
@@ -85,7 +85,45 @@ beforeEach(() => {
 	disk.failWrites = 0
 })
 
+describe('public source links', () => {
+	it('preserves platform share URLs but never CDN signatures or direct link credentials', () => {
+		expect(publicSourceUrl('https://www.youtube.com/watch?v=abc')).toBe('https://www.youtube.com/watch?v=abc')
+		for (const value of [
+			'file:///tmp/a',
+			'https://example.com/a?token=secret',
+			'https://youtube.com.evil.test/a',
+			'https://www.youtube.com/watch?v=a&signature=secret',
+		]) {
+			expect(publicSourceUrl(value)).toBeUndefined()
+		}
+	})
+
+	it('round trips an optional source without changing old records', async () => {
+		const saved = await saveTranscript({ name: '分享视频', sourcePath: '', sourceUrl: 'https://www.bilibili.com/video/BV123', segments, createdAt })
+		expect((await readTranscript(saved!.recordPath))?.sourceUrl).toBe('https://www.bilibili.com/video/BV123')
+		const older = await saveTranscript({ name: '本地文件', sourcePath: '', segments, createdAt })
+		expect((await readTranscript(older!.recordPath))?.sourceUrl).toBeUndefined()
+	})
+
+	it('round trips Xiaohongshu public share tokens while excluding tokens from other platforms', async () => {
+		const shareUrl = 'https://www.xiaohongshu.com/explore/share-id?xsec_token=public-share-placeholder&xsec_source=pc_share'
+		expect(publicSourceUrl(shareUrl)).toBe(shareUrl)
+		const saved = await saveTranscript({ name: '小红书分享', sourcePath: '', sourceUrl: shareUrl, segments, createdAt })
+		expect((await readTranscript(saved!.recordPath))?.sourceUrl).toBe(shareUrl)
+
+		const credentialUrl = 'https://www.youtube.com/watch?v=abc&xsec_token=credential-placeholder'
+		expect(publicSourceUrl(credentialUrl)).toBeUndefined()
+		const filtered = await saveTranscript({ name: '不可保存凭据', sourcePath: '', sourceUrl: credentialUrl, segments, createdAt })
+		expect((await readTranscript(filtered!.recordPath))?.sourceUrl).toBeUndefined()
+	})
+})
+
 describe('project media ownership', () => {
+	it('keeps the default store separate from the official Vibe app', async () => {
+		expect(await transcriptsFolder()).toBe('/documents/Vibe Qwen')
+		expect(disk.directories.has('/documents/Vibe')).toBe(false)
+	})
+
 	it('persists an untranscribed recording as a playable empty project', async () => {
 		disk.files.set('/temp/meeting.wav', new Uint8Array([1, 2, 3]))
 
