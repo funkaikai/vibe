@@ -36,7 +36,8 @@
 
 **所有链接都必须经过在线文本模型解析，包括直接指向音视频文件的链接。** 未配置或调用失败时，应用保留输入并提示；同次提交的本地附件可以独立处理。具体配置与重试方式见[首页使用说明](HOMEPAGE.md)。
 
-当前平台验收情况如下，不能将下载器有入口等同于已全面支持该平台：
+Ideas, bug reports and translation fixes are welcome — please [open an issue](https://github.com/thewh1teagle/vibe/issues).
+Pull requests are limited to a few collaborators. See [CONTRIBUTE.md](CONTRIBUTE.md).
 
 | 来源           | 当前验证范围                                           |
 | -------------- | ------------------------------------------------------ |
