@@ -1,12 +1,10 @@
 import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { Moon, Sun } from 'lucide-react'
+import { BookOpen, ListTree, Moon, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { m } from '~/paraglide/messages.js'
-import { ReactComponent as DiscordIcon } from '~/icons/discord.svg'
 import { ReactComponent as GithubIcon } from '~/icons/github.svg'
-import { ReactComponent as HeartIcon } from '~/icons/heart.svg'
 import { ReactComponent as LinkIcon } from '~/icons/link.svg'
 import * as config from '~/lib/config'
 import { DisplayLanguageInput } from '~/components/display-language-input'
@@ -110,20 +108,20 @@ export function GeneralSection({ vm }: { vm: SettingsViewModel }) {
 			</SettingsGroup>
 
 			<section className="space-y-2">
-				<h3 className="px-1 text-[13px] font-medium">{m.generalHelp()}</h3>
+				<h3 className="px-1 text-[13px] font-medium">帮助与反馈</h3>
 				<div className="grid grid-cols-2 gap-2">
 					{[
-						{ label: m.projectLink(), icon: LinkIcon, action: () => openUrl(config.aboutURL) },
+						{ label: '项目主页', icon: LinkIcon, action: () => openUrl(config.aboutURL) },
+						{ label: '使用说明', icon: BookOpen, action: () => openUrl(config.usageDocURL) },
+						{ label: '功能总览', icon: ListTree, action: () => openUrl(config.featureMapURL) },
 						{ label: m.reportIssue(), icon: GithubIcon, action: vm.reportIssue },
-						{ label: m.supportTheProject(), icon: HeartIcon, action: () => openUrl(config.supportVibeURL), support: true },
-						{ label: m.discordCommunity(), icon: DiscordIcon, action: () => openUrl(config.discordURL) },
-					].map(({ label, icon: Icon, action, support }) => (
+					].map(({ label, icon: Icon, action }) => (
 						<button
 							key={label}
 							type="button"
 							onClick={action}
 							className="flex min-h-11 items-center gap-2.5 rounded-lg border border-border/60 bg-card px-3 py-2.5 text-start text-xs font-medium transition-colors hover:bg-accent/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-							<Icon aria-hidden="true" className={`h-4 w-4 shrink-0 ${support ? 'fill-rose-500 text-rose-500' : 'text-muted-foreground'}`} />
+							<Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
 							<span>{label}</span>
 						</button>
 					))}

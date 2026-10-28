@@ -6,6 +6,7 @@ import { m } from '~/paraglide/messages.js'
 import { ReactComponent as LinkIcon } from '~/icons/link.svg'
 import * as config from '~/lib/config'
 import { defaultModel, type AiPlatform, type AiSettings } from '~/lib/ai'
+import { applyConnectionPreset, connectionPreset, DEEPSEEK_MODELS, updateConnectionBaseUrl } from '~/lib/ai/presets'
 import NumberField from '~/components/number-field'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -41,7 +42,7 @@ function PlatformOption({ platform }: { platform: AiPlatform }) {
 			<svg viewBox="0 0 24 24" role="img" aria-hidden className="h-4 w-4 shrink-0">
 				<path d={icon.path} fill="currentColor" />
 			</svg>
-			<span className="capitalize">{platform === 'openai' ? 'OpenAI Compatible' : platform}</span>
+			<span className="capitalize">{platform === 'openai' ? '自定义 OpenAI 兼容接口' : platform}</span>
 		</span>
 	)
 }
@@ -72,6 +73,19 @@ export function AiSection({ vm, onOpenPrompt }: { vm: SettingsViewModel; onOpenP
 	const setTask = <T extends AiTaskId>(task: T, patch: Partial<AiSettings['tasks'][T]>) =>
 		setAi({ ...ai, tasks: { ...tasks, [task]: { ...tasks[task], ...patch } } })
 	const test = vm.aiTest
+	const isDeepSeek = connection.platform === 'openai' && connectionPreset(connection) === 'deepseek'
+	const selectProvider = (provider: string) => {
+		if (provider === 'deepseek') {
+			setConnection(applyConnectionPreset(connection, 'deepseek'))
+			return
+		}
+		const platform = provider as AiPlatform
+		if (platform === 'openai' && connectionPreset(connection) === 'deepseek') {
+			setConnection(applyConnectionPreset(connection, 'custom'))
+		} else {
+			setConnection({ platform, model: defaultModel(platform) })
+		}
+	}
 
 	return (
 		<div className="space-y-6">
@@ -96,12 +110,17 @@ export function AiSection({ vm, onOpenPrompt }: { vm: SettingsViewModel; onOpenP
 			</SettingsGroup>
 
 			<SettingsGroup title={m.connection()}>
+				<SettingsNote>
+					首页的所有链接都需经过在线文本模型解析。请选择 DeepSeek 或自定义 OpenAI 兼容接口；本地音视频直接使用首页选择的语音识别模型。
+					此连接也供已开启的摘要和听写任务使用，切换预设不会开启这些任务。API Key 保存在本机配置文件中。
+				</SettingsNote>
 				<SettingsRow label={m.llmPlatform()}>
-					<Select value={connection.platform} onValueChange={(platform: AiPlatform) => setConnection({ platform, model: defaultModel(platform) })}>
+					<Select value={isDeepSeek ? 'deepseek' : connection.platform} onValueChange={selectProvider}>
 						<SelectTrigger className={`w-52 ${rowControlClass}`}>
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
+							<SelectItem value="deepseek">DeepSeek</SelectItem>
 							{(['claude', 'ollama', 'openai'] as const).map((name) => (
 								<SelectItem key={name} value={name}>
 									<PlatformOption platform={name} />
@@ -171,10 +190,10 @@ export function AiSection({ vm, onOpenPrompt }: { vm: SettingsViewModel; onOpenP
 
 				{connection.platform === 'openai' && (
 					<>
-						<SettingsRow label={m.baseUrl()}>
+						<SettingsRow label={m.baseUrl()} description="更换接口地址会清空 API Key，请为新服务重新填写。">
 							<Input
 								value={connection.openaiBaseUrl}
-								onChange={(e) => setConnection({ openaiBaseUrl: e.target.value })}
+								onChange={(e) => setConnection(updateConnectionBaseUrl(connection, e.target.value))}
 								placeholder="https://api.openai.com/v1"
 								className={`w-64 ${rowControlClass}`}
 							/>
@@ -183,18 +202,26 @@ export function AiSection({ vm, onOpenPrompt }: { vm: SettingsViewModel; onOpenP
 							<Input
 								value={connection.openaiApiKey}
 								onChange={(e) => setConnection({ openaiApiKey: e.target.value })}
-								placeholder={m.optionalLocalServerKey()}
+								placeholder="填写在线文本模型 API Key"
 								type="password"
 								className={`w-64 ${rowControlClass}`}
 							/>
 						</SettingsRow>
-						<SettingsRow label={m.llmModel()}>
+						<SettingsRow label={m.llmModel()} description={isDeepSeek ? '选择候选模型，或直接输入服务端支持的模型名称。' : undefined}>
 							<Input
+								list={isDeepSeek ? 'deepseek-model-candidates' : undefined}
 								value={connection.model}
 								onChange={(e) => setConnection({ model: e.target.value })}
-								placeholder={defaultModel('openai')}
+								placeholder={isDeepSeek ? DEEPSEEK_MODELS[0] : defaultModel('openai')}
 								className={`w-64 ${rowControlClass}`}
 							/>
+							{isDeepSeek && (
+								<datalist id="deepseek-model-candidates">
+									{DEEPSEEK_MODELS.map((model) => (
+										<option key={model} value={model} />
+									))}
+								</datalist>
+							)}
 						</SettingsRow>
 					</>
 				)}

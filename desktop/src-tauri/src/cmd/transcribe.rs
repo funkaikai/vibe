@@ -100,6 +100,11 @@ pub async fn transcribe(
         });
     }
 
+    let qwen_model = server_state.lock().await.qwen_model.clone();
+    if let Some(model_path) = qwen_model {
+        return crate::qwen::transcribe(app_handle, options, model_path).await;
+    }
+
     let (client, base_url) = {
         let state = server_state.lock().await;
         let process = state.process.as_ref().ok_or_else(|| CommandError {

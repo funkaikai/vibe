@@ -15,7 +15,7 @@ export function PrivacySection({ vm }: { vm: SettingsViewModel }) {
 				<SettingsRow label={m.saveProjects()} description={m.saveProjectsInfo()}>
 					<Switch checked={vm.preference.saveTranscripts} onCheckedChange={vm.preference.setSaveTranscripts} />
 				</SettingsRow>
-				<ActionRow label={m.privacyPolicy()} icon={<LinkIcon className="h-4 w-4" />} onClick={() => openUrl(config.privacyPolicyURL)} />
+				<ActionRow label="隐私与数据说明" icon={<LinkIcon className="h-4 w-4" />} onClick={() => openUrl(config.privacyPolicyURL)} />
 			</SettingsGroup>
 		</div>
 	)

@@ -48,4 +48,8 @@ tauri-plugin-aptabase/
 **/project.inlang/project_id
 
 # Scratch artifacts for the engine/whisper output comparison (includes a 47MB binary).
-plans/
+plans/*
+!plans/qwen3-asr/
+!plans/homepage-media-input/
+plans/qwen3-asr/__pycache__/
+plans/homepage-media-input/__pycache__/

@@ -21,6 +21,11 @@ include website/website.chore
 server=$(read .server-version)
 bin=desktop/src-tauri/binaries
 
+# Build the additional local Qwen engine for this macOS fork.
+task qwen-setup {
+    uv run scripts/prepare_qwen.py
+}
+
 # Build server/ from the tree and put it where `setup` would have put the
 # release, for iterating on the engine; run `setup` first so ffmpeg is there.
 task server-build target=$TRIPLE {
@@ -38,6 +43,9 @@ task server-build target=$TRIPLE {
 
 # Fetch the vibe-server and ffmpeg sidecars for this machine.
 task setup target=$TRIPLE {
+    if $1 == aarch64-apple-darwin && !exists $bin/qwen-asr-$1 {
+        qwen-setup
+    }
     # $1 is the target: this machine by default, or an explicit triple when
     # CI cross-compiles. The asset names are the server release's own; the
     # triple is also what the sidecar must be called, because Tauri looks for
@@ -144,18 +152,9 @@ task build {
     pnpm exec tauri build
 }
 
-# Rebuild vibe.app, replace the installed one and relaunch it (macOS).
+# This fork must not replace the upstream installation.
 task upgrade {
-    # The updater artifacts are skipped: signing them needs the CI private key.
-    setup
-    cd desktop
-    pnpm exec tauri build --bundles app --config '{"bundle":{"createUpdaterArtifacts":false}}'
-    cd $ROOT
-    try osascript -e 'quit app "vibe"'
-    remove /Applications/vibe.app
-    copy target/release/bundle/macos/vibe.app /Applications/vibe.app
-    open /Applications/vibe.app
-    echo "vibe upgraded and relaunched"
+    fail "Automatic installation is disabled for this fork. Run chore build and open target/release/bundle/macos/Vibe Qwen.app."
 }
 
 # Run the frontend tests.

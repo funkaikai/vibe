@@ -199,7 +199,7 @@ function settingsSection(context: SkillContext) {
 		'user to reopen the app. Write the whole file atomically (write a temporary file beside it,',
 		'then rename it over the original) so Vibe can never read a half-written config.',
 		'',
-		`Source and docs: ${config.repoURL}`,
+		`Source and docs: ${config.projectURL}`,
 	].join('\n')
 }
 

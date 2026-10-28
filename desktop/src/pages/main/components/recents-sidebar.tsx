@@ -379,7 +379,7 @@ function RecentsList({
 }
 
 export default function RecentsSidebar() {
-	const { queue, startNew, preference } = useSession()
+	const { queue, startNew, preference, busy } = useSession()
 	const { updateApp, availableUpdate } = useContext(UpdaterContext)
 	const { width, dragging, handleProps } = useResizableWidth()
 	const [entries, setEntries] = useState<TranscriptEntry[]>([])
@@ -409,6 +409,7 @@ export default function RecentsSidebar() {
 	const activePath = queue.selectedJob?.savedPath ?? null
 
 	async function open(entry: TranscriptEntry) {
+		if (busy) return
 		const record = await readTranscript(entry.path)
 		if (!record) return
 		// The folder entry is the canonical project title. Older records may still contain the
@@ -430,6 +431,7 @@ export default function RecentsSidebar() {
 				<button
 					type="button"
 					onClick={startNew}
+					disabled={busy}
 					className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium text-foreground transition-colors duration-150 hover:bg-muted/60">
 					<Plus className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
 					{m.newTranscription()}
@@ -475,7 +477,7 @@ export default function RecentsSidebar() {
 					activePath={activePath}
 					activeName={queue.selectedJob?.name ?? null}
 					// Loading another transcript mid-run would fight the queue for the view.
-					disabled={queue.running}
+					disabled={busy}
 					onOpen={(entry) => void open(entry)}
 					onChanged={refresh}
 				/>

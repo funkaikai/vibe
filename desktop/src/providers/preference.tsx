@@ -16,6 +16,7 @@ import { readConfig } from '~/lib/config-store'
 import { message } from '@tauri-apps/plugin-dialog'
 import { invoke } from '@tauri-apps/api/core'
 import type { ModelMetadata } from '~/lib/model'
+import { isModelLocked } from '~/lib/model-lock'
 
 /** Which build of the engine's CPU backend to run; `auto` lets CPUID decide. */
 export type CpuVariant = 'auto' | 'avx2' | 'baseline'
@@ -168,12 +169,12 @@ export interface ModelOptions {
 }
 
 const systemIsDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-const defaultDisplayLanguage = 'en-US'
+const defaultDisplayLanguage = 'zh-CN'
 
 export const DEFAULT_MODEL_OPTIONS: ModelOptions = {
 	init_prompt: '',
 	verbose: false,
-	lang: 'en',
+	lang: 'zh',
 	n_threads: 4,
 	temperature: 0.4,
 	max_text_ctx: undefined,
@@ -203,7 +204,13 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 	const [language, setLanguage] = usePersisted(CONFIG_KEYS.displayLanguage, defaultDisplayLanguage)
 	const [isFirstRun, setIsFirstRun] = usePersisted(CONFIG_KEYS.firstRun, true)
 
-	const [modelPath, setModelPath] = usePersisted<string | null>(CONFIG_KEYS.modelPath, null)
+	const [modelPath, persistModelPath] = usePersisted<string | null>(CONFIG_KEYS.modelPath, null)
+	const setModelPath: ModifyState<string | null> = useCallback(
+		(next) => {
+			if (!isModelLocked()) persistModelPath(next)
+		},
+		[persistModelPath],
+	)
 	const [modelMetadata, setModelMetadata] = useState<ModelMetadata | null>(null)
 	const [modelDisplayNames, setModelDisplayNames] = usePersisted<Record<string, string>>(CONFIG_KEYS.modelDisplayNames, {})
 	const [skippedSetup, setSkippedSetup] = usePersisted<boolean>(CONFIG_KEYS.skippedSetup, false)

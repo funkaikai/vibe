@@ -1,119 +1,116 @@
-<p align="center">
-  <a target="blank" href="https://github.com/thewh1teagle/vibe">
-    <img
-        width="96px"
-        alt="Vibe logo"
-        src="./design/logo.png"
-    />
-  </a>
-</p>
+# Vibe Qwen
 
-<h1 align="center">Vibe - Transcribe on your own!</h1>
+面向 macOS 的本地音视频转文字应用。以中文转写为主要使用场景，支持导入本地文件、粘贴视频分享链接、管理语音模型，以及编辑和导出转写结果。
 
-<p align="center">
-  <strong>⌨️ Transcribe audio and video right on your device</strong>
-  <br/>
-</p>
+[项目仓库](https://github.com/funkaikai/vibe/tree/fork/macos-baseline) · [开始使用](#开始使用) · [完整功能](docs/FEATURE_MAP.md) · [隐私与数据说明](docs/PRIVACY.md) · [帮助与反馈](docs/FEEDBACK.md)
 
-<p align="center">
-  <a target="_blank" href="https://thewh1teagle.github.io/vibe/">
-    🔗 Download Vibe
-  </a>
-    &nbsp; | &nbsp; Give it a Star ⭐ | &nbsp;
-    <a target="_blank" href="https://thewh1teagle.github.io/vibe/?action=support-vibe">Support the project 🤝</a>
-</p>
+## 当前版本
 
-<hr />
+当前提供 **macOS Apple Silicon 本地开发构建**，最低系统版本为 macOS 13.3。应用名为 `Vibe Qwen`，当前版本尚未完成 Developer ID 签名和公证，也未建立公开安装包及自动更新渠道。其他平台暂不作为本产品的交付目标。
 
-## Screenshots
+## 核心功能
 
-<p align="center">
-	<a target="_blank" href="https://thewh1teagle.github.io/vibe/">
-    	<img width=720 src="./design/app-preview-light.png">
-	</a>
-</p>
+- **统一输入**：在中文首页粘贴完整分享文案或多个链接，也可以选择、拖入音视频文件及文件夹；附件先暂存，提交后开始处理。
+- **本地语音识别**：支持 Qwen3-ASR-1.7B 和已有 Whisper 等本地模型，音视频解码与语音识别在 Mac 上完成。
+- **模型管理**：下载、取消下载、完整性校验、损坏修复和已安装模型切换；任务处理期间固定所选模型。
+- **链接转写**：通过在线文本模型识别输入中的媒体链接，下载并校验音轨后，交给本地语音模型转写。
+- **任务与历史**：顺序处理多个输入，查看进度和实时文本，取消任务或重试准备失败项，并保存项目记录。
+- **阅读与编辑**：搜索和修改段落，结合播放器定位时间戳、调整播放速度，并管理最近记录。
+- **多格式导出**：支持 TXT、Markdown、SRT、VTT、HTML、JSON、CSV、DOCX 和 PDF，以及批量和自动导出。
+- **可选文本处理**：配置 DeepSeek 或通用 OpenAI 兼容接口后使用摘要、转写问答等功能；摘要和听写整理也保留 Claude、Ollama 连接选项。
 
-# Features 🌟
+全部功能、源码入口及能力限制见[功能全景与思维导图](docs/FEATURE_MAP.md)。
 
-- 🌍 Transcribe almost every language
-- 🔒 Ultimate privacy: fully offline transcription, no data ever leaves your device
-- 🎨 User friendly design
-- 🎙️ Transcribe audio / video
-- 🎶 Option to transcribe audio from popular websites (YouTube, Vimeo, Facebook, Twitter and more!)
-- 📂 Batch transcribe multiple files!
-- 📝 Support `SRT`, `VTT`, `TXT`, `HTML`, `PDF`, `JSON`, `DOCX` formats
-- 👀 Realtime preview
-- 🤖 Supports Whisper, Nemotron 3.5, and Parakeet TDT v3 models
-- ✨ Summarize transcripts: Get quick, multilingual summaries using the Claude API
-- 🧠 Ollama support: Do local AI analysis and batch summaries with Ollama
-- 🌐 Translate to English from any language
-- 🖨️ Print transcript directly to any printer
-- 🔄 Automatic updates
-- 💻 Optimized for `GPU` (`macOS`, `Windows`, `Linux`)
-- 🎮 Optimized for `Nvidia` / `AMD` / `Intel` GPUs! (`Vulkan`/`CoreML`)
-- 🔧 Total Freedom: Customize Models Easily via Settings
-- ⚙️ Model arguments for advanced users
-- ⏳ Transcribe system audio
-- 🎤 Transcribe from microphone
-- 🖥️ CLI support: Use Vibe directly from the command line interface! (see `--help`)
-- 👥 Speaker diarization
-- 🎬 Stable timestamps mode for subtitle/movie-grade timing (VAD-backed, slower)
-- 📱 Record from your phone: scan a QR code once, then your computer does the transcribing and sends the text straight back — works on iOS and Android with nothing to install from an app store
-- 📥 Integrate custom models from your own site: Use `vibe://download/?url=<model url>`
-- 📹 Choose caption length optimized for videos / reels
-- ⚡ HTTP API with Swagger docs and agent skills
+## 开始使用
 
-# Supported platforms 🖥️
+1. 打开 `Vibe Qwen.app`，进入“设置 > 模型”，下载 Qwen3-ASR-1.7B，或选择已有可用模型。Qwen 权重约占 4.7 GB 磁盘空间。
+2. 回到“新建转录”，点击“选择文件”，或拖入音视频文件、文件夹。文件会先显示为附件，可以继续添加或移除。
+3. 在输入框右下选择语音识别模型，点击提交按钮，或按 `Command+Enter` 开始。直接按 `Enter` 换行。
+4. 转写完成后阅读、编辑、播放核对，并导出所需格式。项目默认保存在 `Documents/Vibe Qwen`，可以在设置中修改。
 
-`MacOS`
-`Windows`
-`Linux`
+本地文件转写无需文本模型 API。首次下载语音模型需要网络，模型准备完成后，本地识别可以离线运行。
 
-# Contribute 🤝
+### 使用视频链接
 
-## Developers
+先在“设置 > AI”配置 DeepSeek 或在线 OpenAI 兼容接口的地址、模型名和 API Key，并测试连接；随后把完整分享文案或音视频链接粘贴到首页提交。
 
-Get started with local development [here](docs/BUILDING.md).
+**所有链接都必须经过在线文本模型解析，包括直接指向音视频文件的链接。** 未配置或调用失败时，应用保留输入并提示；同次提交的本地附件可以独立处理。具体配置与重试方式见[首页使用说明](HOMEPAGE.md)。
 
 Ideas, bug reports and translation fixes are welcome — please [open an issue](https://github.com/thewh1teagle/vibe/issues).
 Pull requests are limited to a few collaborators. See [CONTRIBUTE.md](CONTRIBUTE.md).
 
-# Community
+| 来源           | 当前验证范围                                           |
+| -------------- | ------------------------------------------------------ |
+| 音视频文件直链 | 已完成实际下载、音轨校验，以及本地 Qwen 转写与项目保存 |
+| YouTube        | 公开样例已完成实际下载与音轨校验                       |
+| 微博           | 公开样例只验证到媒体信息提取                           |
+| B站            | 当前样例请求被拒绝，尚未解决                           |
+| 小红书         | 当前样例未取得可用视频格式                             |
+| 抖音           | 当前样例要求 Cookie，第一版未接入 Cookie 或账号登录    |
 
-[![Discord](https://img.shields.io/badge/chat-discord-7289da.svg)](https://discord.gg/EcxWSstQN8)
+具体样例与结果见[平台验收记录](plans/homepage-media-input/platform-validation.md)。在线文本模型尚未使用真实账号完成联调，平台下载也受内容状态、网络环境和平台限制影响。
 
-# Roadmap 🛣️
+## 模型与使用边界
 
-You can see the roadmap in [Vibe-Roadmap](https://github.com/users/thewh1teagle/projects/5/views/1)
+Qwen3-ASR-1.7B 使用官方权重和本地 CPU 引擎，当前暂不使用 Apple GPU。输入按最多约 20 秒分块处理，输出时间范围为分块边界，尚不提供词级或句级精确对齐；当前也不支持翻译、说话人分离、手机接力、HTTP API 和独立命令行转写。
 
-# Add translation 🌐
+其他引擎按各自能力启用相应选项。仓库保留录音、快捷键听写、手机接力、HTTP API 等实现，不代表这些能力都已完成本产品的实机验收；手机接力需要配置自有手机网页，未配置时不提供配对入口。
 
-See the [translation guide](docs/TRANSLATIONS.md).
+模型下载、校验修复和详细限制见[Qwen 使用与构建说明](QWEN.md)。
 
-# Docs 📄
+## 隐私与数据
 
-see [Vibe Docs](https://github.com/thewh1teagle/vibe/tree/main/docs)
+语音识别在本地完成；链接解析会将输入文案和候选链接发送到配置的在线模型接口。启用摘要、问答或听写整理时，相应转写文本、问题和上下文会发送到所选文本模型服务。
 
-# I want to know more!
+API Key 当前保存在本机配置文件中，尚未接入 macOS 钥匙串加密存储。项目、媒体副本和日志也保存在本机。使用统计是否发送，同时取决于设置中的统计开关和构建时的服务配置。完整说明见[隐私与数据说明](docs/PRIVACY.md)。
 
-Medium [post](https://medium.com/@thewh1teagle/creating-vibe-multilingual-audio-transcription-872ab6d9dbb0)
+## 本地开发
 
-# Issue report
+当前桌面端采用 **Tauri + React + Rust**。构建需要 macOS Apple Silicon、Xcode Command Line Tools、Rust、Node.js、pnpm、uv，以及 `chore >= 1.6.0`。
 
-You can open [new issue](https://github.com/thewh1teagle/vibe/issues/new?assignees=octocat&labels=bug&projects=&template=bug_report.yaml&title=[Short+title]) and it's recommend to check [DEBUG.md](docs/DEBUG.md) first.
+在仓库根目录执行：
 
-# Privacy Policy 🔒
+```sh
+chore setup
+cd desktop
+pnpm install --frozen-lockfile
+pnpm exec tauri build --bundles app
+```
 
-Your privacy is important to us. Please review our [Privacy Policy](http://thewh1teagle.github.io/vibe/?action=open-privacy-policy) to understand how we handle your data.
+应用产物位于 `target/release/bundle/macos/Vibe Qwen.app`。本地签名、引擎准备和权重版本以 [Qwen 构建说明](QWEN.md)为准。
 
-# Credits
+常用检查命令：
 
-Thanks for [tauri.app](https://tauri.app/) for making the best apps framework I ever seen
+```sh
+cd desktop
+pnpm test
+pnpm exec tsc --noEmit
+cd ..
+cargo test -p vibe
+```
 
-Thanks for [github.com/whisper.cpp](https://github.com/ggerganov/whisper.cpp) for outstanding interface for the AI model.
+| 目录            | 内容                           |
+| --------------- | ------------------------------ |
+| `desktop`       | 桌面界面与 Tauri 原生命令      |
+| `server`        | 本地转写服务、命令行和语音引擎 |
+| `handoff`       | 手机接力协议、网络桥和手机网页 |
+| `website`       | 配套网站工程                   |
+| `scripts`       | 构建、模型准备与维护脚本       |
+| `docs`、`plans` | 功能文档、设计与验证记录       |
 
-Thanks for [openai.com](https://openai.com/) for their amazing [Whisper model](https://openai.com/research/whisper)
+## 文档与反馈
 
-Thanks for [github.com](https://github.com/) for their support in open source projects, providing infastructure completely free.
+- [功能全景、思维导图与源码索引](docs/FEATURE_MAP.md)
+- [首页、在线文本模型与链接处理](HOMEPAGE.md)
+- [Qwen 模型管理与本地构建](QWEN.md)
+- [视频平台实际验收记录](plans/homepage-media-input/platform-validation.md)
+- [隐私与数据说明](docs/PRIVACY.md)
+- [帮助与反馈](docs/FEEDBACK.md)
 
-And for all the amazing open source frameworks and libraries which this project uses...
+当前仓库尚未启用问题跟踪和讨论区，也未建立独立社区或赞助渠道。排查与诊断信息整理方式见帮助文档。
+
+## 开源许可与致谢
+
+本项目基于 Vibe 开源项目迭代，感谢原作者 thewh1teagle 及贡献者，也感谢 Qwen、qwen-asr、Whisper、Tauri、React、FFmpeg 等项目提供的能力。
+
+当前代码按 [MIT 许可证](LICENSE)提供，保留原项目版权及许可声明。第三方依赖、语音引擎和模型使用各自的许可证，具体以对应组件附带的声明为准。

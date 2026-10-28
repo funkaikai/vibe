@@ -30,7 +30,7 @@ pub fn get_app_info() -> String {
     info
 }
 
-pub fn get_issue_url(logs: String) -> String {
-    let extra_info = get_app_info();
-    format!("https://github.com/thewh1teagle/vibe/issues/new?assignees=octocat&labels=bug&projects=&template=bug_report.yaml&title=App+reports+bug&logs={}", urlencoding::encode(&format!("{}\n\n{}", extra_info, logs)))
+pub fn get_feedback_url() -> &'static str {
+    // 崩溃诊断保留在本地日志，打开帮助页时不通过 URL 发送。
+    "https://github.com/funkaikai/vibe/blob/fork/macos-baseline/docs/FEEDBACK.md"
 }

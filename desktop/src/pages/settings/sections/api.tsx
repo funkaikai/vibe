@@ -10,6 +10,13 @@ export function ApiSection({ vm }: { vm: SettingsViewModel }) {
 	const apiDocsUrl = vm.apiBaseUrl ? `${vm.apiBaseUrl}/docs` : null
 	const serverActionBusy = vm.isStartingApiServer || vm.isStoppingApiServer
 	const statusDescription = vm.isStartingApiServer ? m.apiStarting() : vm.isStoppingApiServer ? m.apiStopping() : (vm.apiBaseUrl ?? undefined)
+	if (vm.preference.modelMetadata?.capabilities.engine === 'qwen3-asr') {
+		return (
+			<SettingsGroup>
+				<SettingsNote>当前 Qwen 模型仅支持本机转写，暂不提供 HTTP API。</SettingsNote>
+			</SettingsGroup>
+		)
+	}
 
 	return (
 		<div className="space-y-6">

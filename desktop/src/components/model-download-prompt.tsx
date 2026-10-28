@@ -1,6 +1,5 @@
 import { Download, X } from 'lucide-react'
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { CONFIG_KEYS } from '~/lib/config-keys'
 import { usePersisted } from '~/lib/config-store'
 import { m } from '~/paraglide/messages.js'
@@ -8,7 +7,6 @@ import { usePreferenceProvider } from '~/providers/preference'
 import { Button } from './ui/button'
 
 export default function ModelDownloadPrompt() {
-	const navigate = useNavigate()
 	const preference = usePreferenceProvider()
 	const [dismissed, setDismissed] = usePersisted(CONFIG_KEYS.modelPromptDismissed, false)
 
@@ -21,8 +19,7 @@ export default function ModelDownloadPrompt() {
 	if (preference.modelPath || dismissed) return null
 
 	function downloadDefaultModel() {
-		preference.setSkippedSetup(false)
-		navigate('/setup')
+		window.dispatchEvent(new CustomEvent('vibe:open-settings', { detail: { scrollTo: 'models' } }))
 	}
 
 	return (
@@ -38,7 +35,6 @@ export default function ModelDownloadPrompt() {
 
 			<div className="pr-7">
 				<p className="font-medium">{m.noModelsInstalled()}</p>
-				<p className="mt-1 text-sm text-muted-foreground">{m.downloadDefaultModelDescription()}</p>
 			</div>
 
 			<Button size="sm" className="mt-3 w-full" onClick={downloadDefaultModel}>

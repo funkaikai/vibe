@@ -8,7 +8,7 @@ const BYTES_PER_TOKEN = 4
 
 export interface AiClient {
 	/** The whole answer at once. */
-	ask(prompt: string): Promise<string>
+	ask(prompt: string, signal?: AbortSignal): Promise<string>
 	/** The answer as it arrives; resolves with the whole text. */
 	stream(prompt: string, onToken: (text: string) => void): Promise<string>
 }
@@ -122,11 +122,12 @@ class Ollama implements AiClient {
 		// Ollama checks Origin; the plugin's unsafe-headers feature lets us set it.
 		return { 'Content-Type': 'application/json', Origin: 'http://127.0.0.1' }
 	}
-	async ask(prompt: string) {
+	async ask(prompt: string, signal?: AbortSignal) {
 		const response = await fetch(`${this.connection.ollamaBaseUrl.replace(/\/+$/, '')}/api/generate`, {
 			method: 'POST',
 			headers: this.headers(),
 			body: this.body(prompt, false),
+			signal,
 		})
 		if (!response.ok) throw await failure('Ollama', response)
 		return (await response.json())?.response ?? ''
@@ -173,8 +174,8 @@ class OpenAICompatible implements AiClient {
 			messages: [{ role: 'user', content: prompt }],
 		})
 	}
-	async ask(prompt: string) {
-		const response = await fetch(this.url(), { method: 'POST', headers: this.headers(), body: this.body(prompt, false) })
+	async ask(prompt: string, signal?: AbortSignal) {
+		const response = await fetch(this.url(), { method: 'POST', headers: this.headers(), body: this.body(prompt, false), signal })
 		if (!response.ok) throw await failure('OpenAI', response)
 		return (await response.json()).choices?.[0]?.message?.content ?? ''
 	}
@@ -213,8 +214,13 @@ class Claude implements AiClient {
 			messages: [{ role: 'user', content: prompt }],
 		})
 	}
-	async ask(prompt: string) {
-		const response = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: this.headers(), body: this.body(prompt, false) })
+	async ask(prompt: string, signal?: AbortSignal) {
+		const response = await fetch('https://api.anthropic.com/v1/messages', {
+			method: 'POST',
+			headers: this.headers(),
+			body: this.body(prompt, false),
+			signal,
+		})
 		if (!response.ok) throw await failure('Claude', response)
 		return (await response.json()).content?.[0]?.text ?? ''
 	}

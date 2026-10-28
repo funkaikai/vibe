@@ -1,6 +1,9 @@
 import { invoke } from '@tauri-apps/api/core'
 import * as fsExt from '@tauri-apps/plugin-fs'
 import { load } from '@tauri-apps/plugin-store'
+import { writeText } from '@tauri-apps/plugin-clipboard-manager'
+import { openUrl } from '@tauri-apps/plugin-opener'
+import { toast } from 'sonner'
 import * as config from './config'
 import { NamedPath } from './types'
 
@@ -71,19 +74,15 @@ export function issueTitleFrom(log: string): string {
 	return line.length > ISSUE_TITLE_MAX ? `${line.slice(0, ISSUE_TITLE_MAX - 1).trimEnd()}…` : line
 }
 
-/**
- * Prefills the bug template with what the app already knows: the failure as the title and as the
- * "what happened" answer, and the collected diagnostics as the log block.
- */
-export async function getIssueUrl(logs: string) {
-	const params = new URLSearchParams({
-		labels: 'bug',
-		template: 'bug_report.yaml',
-		title: issueTitleFrom(logs),
-		'what-happened': issueTitleFrom(logs),
-		logs,
-	})
-	return `https://github.com/thewh1teagle/vibe/issues/new?${params.toString()}`
+/** 诊断留在剪贴板，用户检查后自行分享；导航地址不携带日志或设备信息。 */
+export async function openFeedback(logs: string) {
+	try {
+		await writeText(`# ${issueTitleFrom(logs)}\n\n${logs}`)
+		toast.success('诊断信息已复制，请检查并去除敏感内容后再分享。')
+	} catch {
+		toast.error('无法复制诊断信息，可在“设置 > 高级”中打开日志目录。')
+	}
+	await openUrl(config.feedbackURL)
 }
 
 export async function openPath(path: NamedPath) {

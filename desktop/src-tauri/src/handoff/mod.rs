@@ -26,20 +26,9 @@ use transfer::HandoffHandler;
 /// `lib/config-keys.ts` (`model.path`, `transcription.saveTranscripts`).
 pub const CONFIG_KEY_HANDOFF_ENABLED: &str = "handoff.enabled";
 
-/// Where the phone PWA is deployed: it ships inside the website's GitHub Pages
-/// artifact. This is a public URL, not a secret, so it lives in committed source
-/// rather than `.env` (which is gitignored and holds signing credentials).
-///
-/// Resolution order, widest to narrowest:
-///   1. `VIBE_PWA_ORIGIN` in the environment at run time — for `just dev` and for
-///      pointing a real phone at a tunnel.
-///   2. `VIBE_PWA_ORIGIN` at compile time — lets a release build bake a different
-///      origin, the same way `APTABASE_APP_KEY` is baked in `analytics.rs`.
-///   3. This constant.
-pub const DEFAULT_PWA_ORIGIN: &str = match option_env!("VIBE_PWA_ORIGIN") {
-    Some(value) => value,
-    None => "https://thewh1teagle.github.io/vibe/phone",
-};
+/// 手机网页须由当前产品自行部署。保留已有变量名及运行时覆盖编译期的规则，
+/// 未配置时关闭接力入口，不再把配对凭据交给上游网页。
+const COMPILED_PWA_ORIGIN: Option<&str> = option_env!("VIBE_PWA_ORIGIN");
 
 /// A running handoff endpoint. Dropping this aborts the accept loop; prefer
 /// [`HandoffState::shutdown`] for a clean close.
@@ -79,12 +68,42 @@ pub(crate) fn format_pairing_url(pwa_origin: &str, endpoint_id: &str, token: &st
     format!("{}/#{}:{}", pwa_origin.trim_end_matches('/'), endpoint_id, token)
 }
 
-/// The origin the pairing QR should point at.
-pub fn pwa_origin() -> String {
-    std::env::var("VIBE_PWA_ORIGIN")
-        .ok()
+/// The configured page the pairing QR should point at.
+pub fn pwa_origin() -> Result<String> {
+    resolve_pwa_origin(std::env::var("VIBE_PWA_ORIGIN").ok().as_deref(), COMPILED_PWA_ORIGIN)
+}
+
+fn resolve_pwa_origin(runtime: Option<&str>, compiled: Option<&str>) -> Result<String> {
+    let value = runtime
         .filter(|value| !value.trim().is_empty())
-        .unwrap_or_else(|| DEFAULT_PWA_ORIGIN.to_string())
+        .or_else(|| compiled.filter(|value| !value.trim().is_empty()))
+        .ok_or_else(|| eyre::eyre!("尚未配置自有手机网页，手机接力暂不可用。请部署手机网页并设置 VIBE_PWA_ORIGIN。"))?
+        .trim();
+    let invalid = || {
+        eyre::eyre!(
+            "手机网页地址无效：VIBE_PWA_ORIGIN 必须使用 HTTPS，且不能包含账号、查询参数或片段；本机开发可使用 HTTP 回环地址。"
+        )
+    };
+    if value.chars().any(char::is_control) {
+        return Err(invalid());
+    }
+    let url = url::Url::parse(value).map_err(|_| invalid())?;
+    let local = match url.host() {
+        Some(url::Host::Domain(host)) => host == "localhost",
+        Some(url::Host::Ipv4(ip)) => ip.is_loopback(),
+        Some(url::Host::Ipv6(ip)) => ip.is_loopback(),
+        None => false,
+    };
+    if !(url.scheme() == "https" || url.scheme() == "http" && local)
+        || url.host().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+    {
+        return Err(invalid());
+    }
+    Ok(url.as_str().trim_end_matches('/').to_owned())
 }
 
 fn handoff_dir(app_handle: &tauri::AppHandle) -> Result<PathBuf> {
@@ -163,6 +182,8 @@ pub fn is_enabled(app_handle: &tauri::AppHandle) -> bool {
 
 /// Bind the iroh endpoint and start accepting handoff connections.
 pub async fn spawn(app_handle: tauri::AppHandle) -> Result<HandoffState> {
+    // 校验先于凭据创建及网络监听，未配置网页时不产生副作用。
+    pwa_origin()?;
     let secret_key = load_or_create_secret_key(&app_handle)?;
     devices::invitation(&app_handle)?;
 
@@ -199,6 +220,10 @@ pub async fn spawn(app_handle: tauri::AppHandle) -> Result<HandoffState> {
 pub fn restore_on_startup(app_handle: &tauri::AppHandle) {
     if !is_enabled(app_handle) {
         tracing::debug!("handoff is disabled; not restoring");
+        return;
+    }
+    if let Err(error) = pwa_origin() {
+        tracing::debug!("handoff is unavailable; not restoring: {}", error);
         return;
     }
 
@@ -241,6 +266,56 @@ pub fn restore_on_startup(app_handle: &tauri::AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn missing_phone_page_disables_handoff_instead_of_using_an_upstream_fallback() {
+        for (runtime, compiled) in [(None, None), (Some("  "), None), (None, Some(""))] {
+            let error = resolve_pwa_origin(runtime, compiled).unwrap_err().to_string();
+            assert!(error.contains("尚未配置自有手机网页"));
+            assert!(error.contains("VIBE_PWA_ORIGIN"));
+        }
+    }
+
+    #[test]
+    fn phone_page_uses_the_existing_runtime_override_and_compiled_fallback() {
+        assert_eq!(
+            resolve_pwa_origin(Some(" https://phone.example/product/ "), Some("https://compiled.example")).unwrap(),
+            "https://phone.example/product"
+        );
+        assert_eq!(
+            resolve_pwa_origin(Some(""), Some("https://compiled.example/")).unwrap(),
+            "https://compiled.example"
+        );
+        assert!(resolve_pwa_origin(Some("invalid"), Some("https://compiled.example")).is_err());
+    }
+
+    #[test]
+    fn phone_page_allows_secure_deployment_and_local_development() {
+        for value in [
+            "https://phone.example/path",
+            "http://localhost:8088",
+            "http://127.0.0.1:8088",
+            "http://[::1]:8088",
+        ] {
+            assert!(resolve_pwa_origin(Some(value), None).is_ok(), "{value}");
+        }
+    }
+
+    #[test]
+    fn phone_page_rejects_unsafe_or_ambiguous_addresses() {
+        for value in [
+            "http://phone.example",
+            "http://192.168.1.10:8088",
+            "https://user:password@phone.example",
+            "https://phone.example/?token=secret",
+            "https://phone.example/#old-pairing",
+            "https://phone.example/\npath",
+            "file:///phone.html",
+            "javascript:alert(1)",
+        ] {
+            assert!(resolve_pwa_origin(Some(value), None).is_err(), "{value}");
+        }
+    }
 
     #[test]
     fn pairing_url_matches_the_contract_shape() {

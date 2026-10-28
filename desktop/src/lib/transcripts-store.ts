@@ -5,20 +5,20 @@ import type { Segment, SpeakerNames } from './transcript'
 /**
  * Transcript persistence.
  *
- * The store is *a folder of project folders*: `Documents/Vibe/<name>-<yyyyMMdd-HHmmss>/` holding
+ * The store is *a folder of project folders*: `Documents/Vibe Qwen/<name>-<yyyyMMdd-HHmmss>/` holding
  * `transcript.vibe.json` next to a copy of the media it was transcribed from (`audio.<ext>`), so a
  * saved transcript stays playable even after the original file moves or is deleted.
  *
  * There is no index and no database — listing scans the store and derives the display name and
  * creation date from the folder name, so the list never has to read (and parse) every transcript.
- * Legacy flat saves (`Documents/Vibe/<name>-<stamp>.vibe.json`) are still listed, read, renamed and
+ * Legacy flat saves (`Documents/Vibe Qwen/<name>-<stamp>.vibe.json`) are still listed, read, renamed and
  * deleted in place; only new saves use project folders.
  *
  * Every operation here is best-effort: failures are logged and reported as null/empty so a broken
  * disk, a missing folder or a corrupt file can never break the transcription flow.
  */
 
-export const TRANSCRIPTS_FOLDER = 'Vibe'
+export const TRANSCRIPTS_FOLDER = 'Vibe Qwen'
 export const TRANSCRIPT_EXTENSION = '.vibe.json'
 /** Name of the record inside a project folder. */
 export const TRANSCRIPT_FILENAME = `transcript${TRANSCRIPT_EXTENSION}`
@@ -29,6 +29,8 @@ export interface TranscriptRecord {
 	version: number
 	name: string
 	sourcePath: string
+	/** Public share URL only; expiring media URLs are never saved. */
+	sourceUrl?: string
 	/** ISO 8601 */
 	createdAt: string
 	language?: string
@@ -42,6 +44,38 @@ export interface TranscriptRecord {
 	summary?: string
 	/** Questions asked about this transcript and the model's answers, oldest first. */
 	thread?: AiThreadEntry[]
+}
+
+/** Keep only public platform share URLs, never CDN signatures or direct media credentials. */
+export function publicSourceUrl(value: unknown): string | undefined {
+	if (typeof value !== 'string' || value.length > 8192) return undefined
+	try {
+		const url = new URL(value)
+		const platforms = [
+			'bilibili.com',
+			'b23.tv',
+			'xiaohongshu.com',
+			'xhslink.com',
+			'youtube.com',
+			'youtu.be',
+			'douyin.com',
+			'iesdouyin.com',
+			'weibo.com',
+			'weibo.cn',
+		]
+		if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.port || url.hash) return undefined
+		if (!platforms.some((domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`))) return undefined
+		if (
+			[...url.searchParams.keys()].some((key) => {
+				if (key === 'xsec_token' && (url.hostname === 'xiaohongshu.com' || url.hostname.endsWith('.xiaohongshu.com'))) return false
+				return /token|sign|auth|expire|credential|key|secret|cookie/i.test(key)
+			})
+		)
+			return undefined
+		return url.href
+	} catch {
+		return undefined
+	}
 }
 
 export interface AiThreadEntry {
@@ -72,7 +106,9 @@ export interface TranscriptEntry {
 export interface SaveTranscriptInput {
 	name: string
 	sourcePath: string
-	/** Custom root for project folders; null/undefined uses Documents/Vibe. */
+	/** Public share URL only; expiring media URLs are never saved. */
+	sourceUrl?: string
+	/** Custom root for project folders; null/undefined uses Documents/Vibe Qwen. */
 	projectsPath?: string | null
 	/** Vibe-created media is removed only after its project copy and metadata are durable. */
 	moveSourceMedia?: boolean
@@ -277,6 +313,7 @@ export async function saveTranscript(input: SaveTranscriptInput): Promise<SaveTr
 			version: TRANSCRIPT_VERSION,
 			name: input.name,
 			sourcePath: input.sourcePath,
+			sourceUrl: publicSourceUrl(input.sourceUrl),
 			createdAt: createdAt.toISOString(),
 			language: input.language,
 			modelPath: input.modelPath ?? null,
@@ -358,6 +395,7 @@ export async function readTranscript(path: string): Promise<TranscriptRecord | n
 			version: typeof parsed.version === 'number' ? parsed.version : TRANSCRIPT_VERSION,
 			name: parsed.name,
 			sourcePath: typeof parsed.sourcePath === 'string' ? parsed.sourcePath : '',
+			sourceUrl: publicSourceUrl(parsed.sourceUrl),
 			createdAt: typeof parsed.createdAt === 'string' ? parsed.createdAt : new Date(0).toISOString(),
 			language: typeof parsed.language === 'string' ? parsed.language : undefined,
 			modelPath: typeof parsed.modelPath === 'string' ? parsed.modelPath : null,
@@ -396,11 +434,15 @@ export async function resolveProjectAudio(jsonPath: string, record: TranscriptRe
  * Used by inline editing, which changes text only.
  * @returns whether the file now holds the new segments (never throws).
  */
-export async function updateTranscriptSegments(path: string, segments: Segment[]): Promise<boolean> {
+export async function updateTranscriptSegments(
+	path: string,
+	segments: Segment[],
+	transcription?: { modelPath: string | null; language: string },
+): Promise<boolean> {
 	try {
 		const record = await readTranscript(path)
 		if (!record) return false
-		await writeRecordAtomic(path, { ...record, segments })
+		await writeRecordAtomic(path, { ...record, ...transcription, segments })
 		return true
 	} catch (error) {
 		console.warn('failed to update transcript segments:', path, error)

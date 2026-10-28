@@ -15,6 +15,7 @@ mod handoff;
 mod keepawake;
 mod logging;
 mod meeting_prompt;
+mod qwen;
 mod server;
 mod setup;
 mod transcript;
@@ -121,6 +122,9 @@ async fn main() -> Result<()> {
             cmd::download::download_model,
             cmd::download::check_model_files,
             cmd::download::cleanup_partial_downloads,
+            qwen::qwen_model_status,
+            qwen::list_qwen_models,
+            qwen::download_qwen_model,
             cmd::server_cmd::load_model,
             cmd::server_cmd::get_gpu_devices,
             cmd::server_cmd::get_model_metadata,
@@ -145,6 +149,8 @@ async fn main() -> Result<()> {
             cmd::app::show_temp_path,
             cmd::files::get_ffmpeg_path,
             cmd::ytdlp::download_audio,
+            cmd::media_download::download_media,
+            cmd::media_download::cancel_media_download,
             cmd::ytdlp::get_temp_path,
             cmd::ytdlp::get_latest_ytdlp_version,
             cmd::app::is_crashed_recently,

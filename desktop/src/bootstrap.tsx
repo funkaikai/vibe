@@ -2,7 +2,9 @@ import ReactDOM from 'react-dom/client'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { unregisterAll } from '@tauri-apps/plugin-global-shortcut'
 import './globals.css'
-import { loadConfigStore } from './lib/config-store'
+import { loadConfigStore, readConfig } from './lib/config-store'
+import { CONFIG_KEYS } from './lib/config-keys'
+import { isLocale, setLocale } from './paraglide/runtime.js'
 import { runMigrations } from './lib/migrations'
 import Root from './root'
 
@@ -14,6 +16,8 @@ import Root from './root'
 async function start() {
 	await loadConfigStore()
 	runMigrations()
+	const language = readConfig(CONFIG_KEYS.displayLanguage, 'zh-CN')
+	setLocale(isLocale(language) ? language : 'zh-CN', { reload: false })
 	// Native registrations outlive a webview reload, including their dead JS callbacks.
 	// Clear them before either shortcut provider mounts. Auxiliary windows must never
 	// clear the main window's live shortcuts when their own webviews start.

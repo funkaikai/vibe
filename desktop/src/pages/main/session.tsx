@@ -20,6 +20,7 @@ import { usePreferenceProvider, type Preference } from '~/providers/preference'
 import { useAudioDownload } from '~/pages/home/hooks/use-audio-download'
 import { useRecording } from '~/pages/home/hooks/use-recording'
 import { useDropTarget } from './hooks/use-drop-target'
+import { useMediaComposer, type MediaComposer } from './hooks/use-media-composer'
 import { useSummaries, type Summaries } from './hooks/use-summaries'
 import { useTranscribeQueue, type TranscribeQueue } from './hooks/use-transcribe-queue'
 
@@ -32,6 +33,8 @@ type AudioDownload = ReturnType<typeof useAudioDownload>
 export interface Session {
 	mode: SessionMode
 	queue: TranscribeQueue
+	composer: MediaComposer
+	busy: boolean
 	/** AI summaries of finished transcripts (settings → Summarize). */
 	summaries: Summaries
 	preference: Preference
@@ -63,6 +66,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 	const { setState: setErrorModal } = useContext(ErrorModalContext)
 	const queue = useTranscribeQueue()
 	const summaries = useSummaries(queue)
+	const composer = useMediaComposer(preference, queue)
+	const busy = composer.preparing || queue.running
 	const [panel, setPanel] = useState<IdlePanel>('none')
 	const [collectingFolder, setCollectingFolder] = useState(false)
 	const [recordElapsed, setRecordElapsed] = useState(0)
@@ -82,6 +87,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
 	const enqueuePaths = useCallback(
 		async (paths: string[], source: ProjectSource) => {
+			if (busy) return
 			const files: NamedPath[] = []
 			for (const item of paths) {
 				// A picked or dropped path may be a folder — detect and expand to its media files.
@@ -104,9 +110,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 					setCollectingFolder(false)
 				}
 			}
-			if (files.length) enqueueRef.current(files)
+			if (files.length) {
+				if (source === 'file') composer.addFiles(files)
+				else enqueueRef.current(files)
+			}
 		},
-		[preference.advancedTranscribeOptions.includeSubFolders],
+		[preference.advancedTranscribeOptions.includeSubFolders, busy, composer.addFiles],
 	)
 
 	const dragging = useDropTarget(
@@ -238,9 +247,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 	}, [enqueuePaths])
 
 	const startNew = useCallback(() => {
+		if (busy) return
+		composer.clear()
 		queue.reset()
 		setPanel('none')
-	}, [queue])
+	}, [queue, composer.clear, busy])
 
 	// Same guards the old home page ran on mount.
 	useEffect(() => {
@@ -264,7 +275,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 					action: {
 						label: m.reDownload(),
 						// Re-downloading writes over the broken file rather than beside it.
-						onClick: () => navigate('/setup', { state: { replacePath: model.path } }),
+						onClick: () =>
+							model.name === 'Qwen3-ASR-1.7B'
+								? window.dispatchEvent(new CustomEvent('vibe:open-settings', { detail: { scrollTo: 'models' } }))
+								: navigate('/setup', { state: { replacePath: model.path } }),
 					},
 				})
 			}
@@ -280,7 +294,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 				reportCorruptModels(installed.filter((model) => !model.valid))
 				if (models.length === 0) {
 					preference.setModelPath(null)
-					if (!preference.skippedSetup) navigate('/setup')
+					if (!preference.skippedSetup) {
+						preference.setSkippedSetup(true)
+						window.dispatchEvent(new CustomEvent('vibe:open-settings', { detail: { scrollTo: 'models' } }))
+					}
 					return
 				}
 				if (!preference.modelPath || !models.some((model) => model.path === preference.modelPath)) {
@@ -288,7 +305,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 				}
 			} catch (error) {
 				console.error(error)
-				navigate('/setup')
+				window.dispatchEvent(new CustomEvent('vibe:open-settings', { detail: { scrollTo: 'models' } }))
 			}
 		}
 
@@ -307,7 +324,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 	// actually be lost: a run in flight, or finished results that never reached disk
 	// (saving disabled or failed).
 	const hasUnsavedResults = queue.jobs.some((job) => job.status === 'done' && !job.hydrated && !job.savedPath)
-	useConfirmExit(preference.closeToTray, queue.running || hasUnsavedResults)
+	useConfirmExit(preference.closeToTray, busy || hasUnsavedResults)
 
 	const mode: SessionMode = queue.jobs.length === 0 ? 'idle' : queue.running || queue.jobs.some((job) => job.status === 'queued') ? 'working' : 'done'
 
@@ -315,6 +332,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		() => ({
 			mode,
 			queue,
+			composer,
+			busy,
 			summaries,
 			preference,
 			dragging,
@@ -327,7 +346,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 			browse,
 			startNew,
 		}),
-		[mode, queue, summaries, preference, dragging, panel, recording, recordElapsed, link, collectingFolder, browse, startNew],
+		[mode, queue, composer, busy, summaries, preference, dragging, panel, recording, recordElapsed, link, collectingFolder, browse, startNew],
 	)
 
 	return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
