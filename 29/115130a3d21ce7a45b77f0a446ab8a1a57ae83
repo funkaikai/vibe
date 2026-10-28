@@ -1,0 +1,72 @@
+desktop/src/lib/config.ts
+  s_80f397cd874d03::t_6da4c3822ab42f 1-10
+desktop/src-tauri/src/handoff/mod.rs
+  s_80f397cd874d03::t_8c7c6aad4fc636 29-31,71-77,79-106,185-186,225-228,270-306,308,312,315,317
+  s_80f397cd874d03::t_49aa7021d2e009 307,309-311,313-314,316,318-319
+desktop/src/components/error-modal.tsx
+  s_80f397cd874d03::t_6da4c3822ab42f 4,31
+docs/FEATURE_MAP.md
+  s_80f397cd874d03::t_b0e6571a9f9274 23-26,35-36
+  s_80f397cd874d03::t_8d75b0797f5748 13-22
+desktop/src-tauri/src/setup.rs
+  s_80f397cd874d03::t_31c889f4d38233 98,100-101
+  s_80f397cd874d03::t_b90f67c92309b4 4,95,97
+desktop/src/mock-tauri/handlers/handoff.ts
+  s_80f397cd874d03::t_b43982a8b9349a 14
+desktop/src/pages/settings/page.tsx
+  s_80f397cd874d03::t_6da4c3822ab42f 171,177,187
+docs/features.mmd
+  s_80f397cd874d03::t_b0e6571a9f9274 156-157,194-199
+desktop/src-tauri/src/diagnostics.rs
+  s_80f397cd874d03::t_b90f67c92309b4 33-35
+desktop/src/pages/settings/sections/general.test.tsx
+  s_80f397cd874d03::t_e4688ca5e1860f 1-41
+desktop/src/mock-tauri/handlers/plugins.ts
+  s_80f397cd874d03::t_b43982a8b9349a 427
+desktop/src-tauri/src/cmd/handoff_cmd.rs
+  s_80f397cd874d03::t_8c7c6aad4fc636 23-24,30-31,55
+desktop/src/lib/skill.ts
+  s_80f397cd874d03::t_b43982a8b9349a 202
+desktop/src/lib/app.test.ts
+  s_80f397cd874d03::t_b43982a8b9349a 1-12,38-59
+  s_80f397cd874d03::t_7dc576a887f96a 60
+desktop/src/pages/settings/sections/privacy.tsx
+  s_80f397cd874d03::t_31c889f4d38233 18
+desktop/src/lib/app.ts
+  s_80f397cd874d03::t_6da4c3822ab42f 4-6,77-85
+docs/superpowers/plans/2026-10-28-product-navigation.md
+  s_80f397cd874d03::t_7c01c3aec3f447 1-18
+  s_80f397cd874d03::t_35e1694d0058d8 19-28
+desktop/src/pages/settings/view-model.ts
+  s_80f397cd874d03::t_6da4c3822ab42f 12,47
+  s_80f397cd874d03::t_31c889f4d38233 22
+desktop/src/pages/settings/sections/general.tsx
+  s_80f397cd874d03::t_6da4c3822ab42f 3,114-116,118,124
+  s_80f397cd874d03::t_31c889f4d38233 111
+docs/superpowers/specs/2026-10-28-product-navigation-design.md
+  s_80f397cd874d03::t_7c01c3aec3f447 1-19
+README.md
+  s_80f397cd874d03::t_308237c55388a6 1,3,5,7,9,11,13-20,22,24,26-29,31,33,35,37,39,41-48,50,52,54,56,58,60,62,64,66,68,70,72-77,79,81,83-89,91-98,100,102-107,109,111,113,115
+docs/FEEDBACK.md
+  s_80f397cd874d03::t_7ea525cf4a1321 1-31
+docs/PRIVACY.md
+  s_80f397cd874d03::t_328a194e69b292 1-61
+docs/features.svg
+  s_80f397cd874d03::t_4164e1d884b760 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "29115130a3d21ce7a45b77f0a446ab8a1a57ae83",
+  "prompts": {},
+  "sessions": {
+    "s_80f397cd874d03": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a17c0b-aba7-74e2-a096-7076199ecc6a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "fun.ma <fun.ma@ly.com>"
+    }
+  }
+}
