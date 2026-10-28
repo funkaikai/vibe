@@ -1,15 +1,13 @@
-export const aboutURL = 'https://thewh1teagle.github.io/vibe/'
-export const repoURL = 'https://github.com/thewh1teagle/vibe'
-export const updateVersionURL = 'https://github.com/thewh1teagle/vibe/releases/latest'
-export const modelsDocURL = 'https://thewh1teagle.github.io/vibe/docs#models'
-/**
- * Release notes. With a version it opens that release, otherwise the whole list —
- * the page falls back to English for a release this locale has not translated.
- */
-export const changelogURL = (version?: string) => `https://thewh1teagle.github.io/vibe/changelog${version ? `/${version}` : ''}`
-export const discordURL = 'https://discord.gg/EcxWSstQN8'
-export const supportVibeURL = 'https://thewh1teagle.github.io/vibe/?action=support-vibe'
-export const privacyPolicyURL = 'https://thewh1teagle.github.io/vibe/?action=open-privacy-policy'
+export const repoURL = 'https://github.com/funkaikai/vibe'
+// 产品文档随当前开发分支更新，避免打开尚未迁移的 main 分支或未发布的发行版。
+export const projectURL = `${repoURL}/tree/fork/macos-baseline`
+const productDocsURL = `${repoURL}/blob/fork/macos-baseline`
+export const aboutURL = `${productDocsURL}/README.md`
+export const usageDocURL = `${productDocsURL}/HOMEPAGE.md`
+export const modelsDocURL = `${productDocsURL}/QWEN.md`
+export const featureMapURL = `${productDocsURL}/docs/FEATURE_MAP.md`
+export const feedbackURL = `${productDocsURL}/docs/FEEDBACK.md`
+export const privacyPolicyURL = `${productDocsURL}/docs/PRIVACY.md`
 export const storeFilename = 'app_config.json'
 
 /** What the catalog knows about a finished download, beyond the bytes themselves. */

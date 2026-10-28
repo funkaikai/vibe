@@ -20,12 +20,15 @@ pub struct HandoffStatus {
 impl HandoffStatus {
     fn snapshot(app: &tauri::AppHandle, state: Option<&HandoffState>) -> Result<Self, CommandError> {
         let (invitation, devices) = devices::snapshot(app)?;
+        let origin = handoff::pwa_origin().ok();
+        let state = state.filter(|_| origin.is_some());
         let endpoint_id = state.map(HandoffState::endpoint_id);
         Ok(Self {
             enabled: state.is_some(),
             pairing_url: endpoint_id
                 .as_ref()
-                .map(|id| handoff::format_pairing_url(&handoff::pwa_origin(), id, &invitation)),
+                .zip(origin.as_ref())
+                .map(|(id, origin)| handoff::format_pairing_url(origin, id, &invitation)),
             pairing_id: state.map(|_| handoff::pairing_id(&invitation)),
             endpoint_id,
             devices,
@@ -49,6 +52,7 @@ pub async fn handoff_start(
     app_handle: tauri::AppHandle,
     runtime: State<'_, HandoffRuntime>,
 ) -> Result<HandoffStatus, CommandError> {
+    handoff::pwa_origin()?;
     let mut guard = runtime.lock().await;
     if guard.is_none() {
         let state = handoff::spawn(app_handle.clone()).await?;

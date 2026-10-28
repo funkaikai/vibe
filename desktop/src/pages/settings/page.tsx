@@ -168,13 +168,13 @@ export default function SettingsPage({ setVisible, scrollTo }: SettingsPageProps
 							</div>
 						))}
 					</nav>
-					{/* The version is also the way into its own release notes — one line, not two affordances. */}
+					{/* 当前版本尚无独立发布记录，版本入口打开本产品功能说明。 */}
 					<div className="mt-2 border-t border-border/55 pt-3">
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<button
 									type="button"
-									onClick={() => openUrl(config.changelogURL(vm.appVersionNumber))}
+									onClick={() => openUrl(config.featureMapURL)}
 									className="group flex w-full cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/60 transition-colors hover:text-foreground">
 									<span className="truncate">{vm.appVersion}</span>
 									<ArrowUpRight
@@ -184,7 +184,7 @@ export default function SettingsPage({ setVisible, scrollTo }: SettingsPageProps
 									/>
 								</button>
 							</TooltipTrigger>
-							<TooltipContent side="top">{m.whatsNew()}</TooltipContent>
+							<TooltipContent side="top">功能说明</TooltipContent>
 						</Tooltip>
 					</div>
 				</div>

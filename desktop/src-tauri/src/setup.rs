@@ -1,7 +1,7 @@
 use crate::{
     cli::{self, is_cli_detected},
     config::STORE_FILENAME,
-    diagnostics::get_issue_url,
+    diagnostics::get_feedback_url,
     error::LogError,
     server::ServerProcess,
 };
@@ -92,12 +92,13 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
             if let Some(app_handle) = STATIC_APP.lock().expect("lock").as_ref() {
                 app_handle
                     .dialog()
-                    .message("App crashed with error. Please register to Github and then click report.")
+                    .message("应用发生错误，诊断已记录在本地日志。请查看本项目的问题反馈说明。")
                     .kind(tauri_plugin_dialog::MessageDialogKind::Error)
-                    .title("Vibe Crashed")
-                    .buttons(MessageDialogButtons::OkCustom("Report".into()))
+                    .title("Vibe Qwen 发生错误")
+                    .buttons(MessageDialogButtons::OkCustom("关闭".into()))
                     .show(|_| {});
-                let _ = tauri_plugin_opener::open_url(get_issue_url(format!("{:?}", info)), None::<&str>);
+                // 致命崩溃后进程可能立即退出，不能等待异步对话框回调再打开说明。
+                let _ = tauri_plugin_opener::open_url(get_feedback_url(), None::<&str>);
             }
 
             crash_handler::CrashEventResult::Handled(true)

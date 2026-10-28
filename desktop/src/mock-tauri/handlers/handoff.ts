@@ -11,7 +11,7 @@ function status() {
 		enabled,
 		endpointId: enabled ? endpointId : null,
 		pairingId: enabled ? `demo-${generation}` : null,
-		pairingUrl: enabled ? `https://thewh1teagle.github.io/vibe/phone/#${endpointId}:${String(generation).padStart(32, '0')}` : null,
+		pairingUrl: enabled ? `https://phone.example.invalid/#${endpointId}:${String(generation).padStart(32, '0')}` : null,
 		devices: [...devices],
 	}
 }

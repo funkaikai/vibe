@@ -1,8 +1,7 @@
-import { openUrl } from '@tauri-apps/plugin-opener'
 import { m } from '~/paraglide/messages.js'
 import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ModifyState } from '~/lib/types'
-import { getIssueUrl, resetApp } from '~/lib/app'
+import { openFeedback, resetApp } from '~/lib/app'
 import { ErrorModalState } from '~/providers/error-modal'
 import * as clipboard from '@tauri-apps/plugin-clipboard-manager'
 import { collectLogs } from '~/lib/logs'
@@ -29,8 +28,7 @@ export default function ErrorModal({ state, setState }: ErrorModalProps) {
 			info = `Couldn't get info: ${e}`
 		}
 
-		const url = await getIssueUrl(state?.log + '\n' + info)
-		openUrl(url)
+		await openFeedback((state?.log ?? '') + '\n' + info)
 	}
 
 	return (
