@@ -1,0 +1,267 @@
+.gitignore
+  s_80f397cd874d03::t_a4fec8c28934c5 53,55
+  s_80f397cd874d03::t_400fbb38cee5bb 51-52,54
+plans/qwen3-asr/qwen3-asr_001.md
+  s_80f397cd874d03::t_59d58a63e4627a 1-2,8-19,22-25,28-33,36-40,48-61
+  s_80f397cd874d03::t_8cc9037b8923d5 41-47
+  s_80f397cd874d03::t_e2c3bb79095ffd 3-7,20-21,26-27,34-35
+desktop/src/pages/main/session.tsx
+  s_80f397cd874d03::t_ee8c91f4626bd0 278-281,297-299
+  s_80f397cd874d03::t_67ac56b4da8dae 23,36-37,69-70,90,113-116,118,250-251,254,300,308,327,335-336,349
+desktop/src/pages/settings/sections/api.tsx
+  s_80f397cd874d03::t_6cd7d93e2d9f53 13-15
+  s_80f397cd874d03::t_b4bb072009b665 16-19
+desktop/src/pages/main/components/media-model-picker.test.tsx
+  s_80f397cd874d03::t_0bfeeb2c47bf7c 1-81
+  s_80f397cd874d03::t_cffe137f50dd60 82-97
+desktop/src/pages/main/components/idle-hero.test.tsx
+  s_80f397cd874d03::t_c0192b7718590d 1-110
+  s_80f397cd874d03::t_4bdd3db077f36c 111-138
+desktop/src/pages/settings/page.tsx
+  s_80f397cd874d03::t_fdc0a779556c14 246-248
+  s_80f397cd874d03::t_733eddf139e803 245,249-253
+desktop/src/bootstrap.test.tsx
+  s_80f397cd874d03::t_77a420bb794993 11-12,20-24,33,39-60
+  s_80f397cd874d03::t_033fc486c9e9ea 61
+desktop/src-tauri/resources/qwen-asr-LICENSE
+  s_80f397cd874d03::t_1c412ce368cfb6 1-21
+desktop/src/lib/media-download.test.ts
+  s_80f397cd874d03::t_e61a55692d127c 1-78
+desktop/src-tauri/tauri.macos.conf.json
+  s_80f397cd874d03::t_a8a33f519dfb08 3-4
+plans/homepage-media-input/platform-validation.md
+  s_80f397cd874d03::t_96ddb064619bb3 7,9-12,16-26,47
+  s_80f397cd874d03::t_367f60870e5a28 15,27-46,67
+  s_80f397cd874d03::t_4a52c753a583c9 1-6,8,13-14,48-66,68-81
+plans/homepage-media-input/homepage-media-input_002.md
+  s_80f397cd874d03::t_1fc389f630357d 1-23,25-30
+  s_80f397cd874d03::t_b7762324e1cea4 24
+desktop/src/pages/settings/sections/qwen-model.tsx
+  s_80f397cd874d03::t_3fa5d21b989685 1-45,48-51,53,56-58,60-61,63-73,75-77,79-102,111-120,133-142
+  s_80f397cd874d03::t_bad37b7442e506 52,54,62,78
+  s_80f397cd874d03::t_d18df9b234f2e2 59,103-110
+  s_80f397cd874d03::t_a2fbc84294cebc 46-47,55,74,121-132
+  s_80f397cd874d03::t_c277621cf59679 143-166
+desktop/src-tauri/src/cmd/media_download.rs
+  s_80f397cd874d03::t_60f1197cbec834 318,586-598,605-607,611-616,626-630
+  s_80f397cd874d03::t_6b6192765837e6 1-9,14-16,22-27,33-34,39-44,51,55-56,61-66,73-94,100-109,118-122,126-129,133-135,144-147,153,162-165,171-176,180-186,194-204,208,212-218,222,226-230,243-245,252-256,260-263,268-276,280-281,285-288,297-299,338,342-354,356,358-375,381-386,393,414-416,425-429,435,440-441,445-458,467-469,473-474,478,492-498,511-545,550-568,665-666
+  s_80f397cd874d03::t_0be108ad787404 10-13,17-21,28-32,35-38,45-50,52-54,57-60,67-72,95-99,110-117,123-125,130-132,136-143,148-152,154-161,166-170,177-179,187-193,205-207,209-211,219-221,223-225,231-242,246-251,257-259,264-267,277-279,282-284,289-296,300-317,319-337,339-341,355,357,376-380,387-392,394-413,417-424,430-434,436-439,442-444,459-466,470-472,475-477,479-482,499-510,546-549,569-570,572,636-644,655,659-664
+  s_80f397cd874d03::t_04ac883c2bce78 483-491,571,573-585,599-604,608-610,617-625,631-635,645-654,656-658
+desktop/src/lib/media-input.test.ts
+  s_80f397cd874d03::t_c664906a64a6d8 1-163
+  s_80f397cd874d03::t_552722d9760e68 164-183
+desktop/src/pages/settings/sections/ai.test.tsx
+  s_80f397cd874d03::t_a2e9b0d375d480 1-59
+  s_80f397cd874d03::t_a46ff43c216a80 60-93
+QWEN.md
+  s_80f397cd874d03::t_cc025b2e559aaa 3,69-71
+  s_80f397cd874d03::t_f92972b05e80c3 20,31-32
+  s_80f397cd874d03::t_18381ac97d58b0 1-2,4-19,21-30,33-68
+desktop/src/lib/ai/client.ts
+  s_80f397cd874d03::t_decf1582a72aee 11,125,130,177-178,217-218
+  s_80f397cd874d03::t_d1bb67b7b1568b 219-223
+desktop/src/providers/preference.tsx
+  s_80f397cd874d03::t_a8a33f519dfb08 172,177
+  s_80f397cd874d03::t_9c79a3583ba580 19,207-213
+desktop/src/windows/meeting-prompt-window.tsx
+  s_80f397cd874d03::t_97989322cc398f 73
+desktop/src/lib/model-lock.ts
+  s_80f397cd874d03::t_d245ae070e2b28 1-25
+desktop/src/pages/main/hooks/use-media-composer.test.ts
+  s_80f397cd874d03::t_173f5acd3e0f5c 1-307
+desktop/src-tauri/src/config.rs
+  s_80f397cd874d03::t_3b354e53283073 5
+plans/qwen3-asr/qwen3-asr_002.py
+  s_80f397cd874d03::t_59d58a63e4627a 1-71
+plans/qwen3-asr/qwen3-asr_003.md
+  s_80f397cd874d03::t_f92972b05e80c3 1-12,14-44
+  s_80f397cd874d03::t_715f0773aec006 13
+desktop/src/lib/media-input.ts
+  s_80f397cd874d03::t_c664906a64a6d8 115,171-172
+  s_80f397cd874d03::t_6503ea74f63c34 11
+  s_80f397cd874d03::t_decf1582a72aee 1-10,12-114,116-170,173-191
+  s_80f397cd874d03::t_ae2de1eb47bd85 192-207
+desktop/src-tauri/src/qwen/mod.rs
+  s_80f397cd874d03::t_6a1740ced2b52f 15,142-143,154,162-176
+  s_80f397cd874d03::t_72b96de9fbc354 1-14,16-59,67-141,144-153,155-161,177-198
+  s_80f397cd874d03::t_03fae94b535ddd 60-66
+desktop/src/pages/main/hooks/use-transcribe-queue.ts
+  s_80f397cd874d03::t_2a3cc507fa9969 32,35,38-39,107,239-241,267,285,329,344-351,410-411,476-477,508
+  s_80f397cd874d03::t_ee8c91f4626bd0 48
+  s_80f397cd874d03::t_8568872833b775 478-483,491,498-500,509-510,535-537
+desktop/src/lib/transcripts-store.test.ts
+  s_80f397cd874d03::t_bdc412db2cf4ac 76,88-90,97-105,118
+  s_80f397cd874d03::t_d5db6e6d5aad44 122-126
+  s_80f397cd874d03::t_e61a55692d127c 91-96,106-117
+  s_80f397cd874d03::t_a722b0e309b9af 119-120
+docs/superpowers/plans/2026-10-28-homepage-media-input.md
+  s_80f397cd874d03::t_9a444ee0c686f3 1-44
+  s_80f397cd874d03::t_f0cb43d47cbf81 45-48
+scripts/prepare_qwen.py
+  s_80f397cd874d03::t_1c412ce368cfb6 1-126
+desktop/src/pages/main/components/idle-hero.tsx
+  s_80f397cd874d03::t_3e35fc84f29605 2,8,10-12,126-134,136-140,142-144,150,156-163,175-176,195,207-210,228-229,234-237,239,257-259,280-282,299,305,309,361,366
+  s_80f397cd874d03::t_eae5ccaa515a0c 145-149,151-155,164-174,177-183,185-194,196-204,206,211-226,240-251,255-256,260-279,283-298,300-304,306,312,314-317,336-338,345,351,356,363
+  s_80f397cd874d03::t_cc7a3c9844bb0a 307-308,310-311,313,318-322,324-326,328-335,339-344,346-350,352-355,357-360,362,364-365,367-370
+desktop/src-tauri/capabilities/main.json
+  s_80f397cd874d03::t_52ebff47bf99bc 30
+desktop/src/bootstrap.tsx
+  s_80f397cd874d03::t_1c33a73a17d39e 5-7,19-20
+desktop/src/pages/settings/view-model.ts
+  s_80f397cd874d03::t_ee8c91f4626bd0 198-201
+  s_80f397cd874d03::t_6fcd7584d5f06d 14,253,255
+desktop/src/lib/use-single-instance.tsx
+  s_80f397cd874d03::t_6cd7d93e2d9f53 24,26-27,30
+desktop/src-tauri/src/cmd/transcribe.rs
+  s_80f397cd874d03::t_a8a33f519dfb08 103-107
+desktop/src/pages/settings/sections/ai.tsx
+  s_80f397cd874d03::t_d2292f872238cd 9,45,76-88,113-116,118,123,193,196,205,210,212,215,218-222
+  s_80f397cd874d03::t_67676c0b38e4e1 223-224
+desktop/src/pages/settings/sections/models.tsx
+  s_80f397cd874d03::t_bad37b7442e506 152
+  s_80f397cd874d03::t_3fa5d21b989685 14-15
+  s_80f397cd874d03::t_ec19ac476e04aa 16,21-22,25,42,63,102-103,106-111,114,149,151,153-170,178,185-190,194-199
+desktop/src/lib/qwen.test.ts
+  s_80f397cd874d03::t_199a44104bc2e3 1-73
+  s_80f397cd874d03::t_795f3aa3845595 74-88
+desktop/src/components/model-download-prompt.tsx
+  s_80f397cd874d03::t_ee8c91f4626bd0 22
+desktop/src/lib/use-deep-links.tsx
+  s_80f397cd874d03::t_6cd7d93e2d9f53 22-23
+desktop/src-tauri/src/qwen/model.rs
+  s_80f397cd874d03::t_601a1cfbcd47d7 85-87
+  s_80f397cd874d03::t_e900241e1ec6e8 1-84,88-182,194-218
+  s_80f397cd874d03::t_b8b7cdcac0a1b2 183-193
+  s_80f397cd874d03::t_64adbc5cfb9b79 219-221
+desktop/src/lib/transcripts-store.ts
+  s_80f397cd874d03::t_2a3cc507fa9969 32-33,49-53,66-67,72-77,439
+  s_80f397cd874d03::t_6324a24984ecbf 54-65,68-71,437-438
+  s_80f397cd874d03::t_d5db6e6d5aad44 8,14,21
+  s_80f397cd874d03::t_3ad871b168dc06 78-80,109-111,316,398,440-441,445
+desktop/src-tauri/src/cmd/server_cmd.rs
+  s_80f397cd874d03::t_1453e1637e0a8d 6,247-253
+  s_80f397cd874d03::t_a8a33f519dfb08 87-95,197,200,214-217
+  s_80f397cd874d03::t_6cd7d93e2d9f53 254-255
+  s_80f397cd874d03::t_c0216d754bf167 256,284
+desktop/src/lib/model.ts
+  s_80f397cd874d03::t_bad37b7442e506 183-190,203-209
+  s_80f397cd874d03::t_3fa5d21b989685 6,41,103,107
+  s_80f397cd874d03::t_bd7412fdd1c344 108-110,210-212
+desktop/src/lib/qwen.ts
+  s_80f397cd874d03::t_3fa5d21b989685 1-33
+  s_80f397cd874d03::t_b6ad36bdd7b206 34-39
+desktop/src-tauri/tauri.conf.json
+  s_80f397cd874d03::t_a8a33f519dfb08 3,5,31,38,43
+desktop/src/pages/settings/sections/qwen-model.test.tsx
+  s_80f397cd874d03::t_a2fbc84294cebc 105-117
+  s_80f397cd874d03::t_199a44104bc2e3 1-104,118
+  s_80f397cd874d03::t_3d5eccc233accb 119-138
+desktop/src/pages/main/hooks/use-media-composer.ts
+  s_80f397cd874d03::t_b674647b944265 1,3-32,36-37,41-48,50-51,53,69,71-73,75,79-80,82,84-89,99-102,104-109,111,115-124,126-127,142-143,145,147,153-157,161-166,172-173,175,180,188,190-191,193-202,206-207,223-227,229-233,235-237,241-242,249,252-253,255-257
+  s_80f397cd874d03::t_6324a24984ecbf 146
+  s_80f397cd874d03::t_173f5acd3e0f5c 2,33-35,38-40,49,52,54-68,70,74,76-78,81,83,90-98,103,110,112-114,125,128-141,144,148-152,158-160,167-171,174,176-179,181-187,189,192,203-205,208-222,228,234,238-240,243-248,250-251,254
+desktop/src/pages/main/page.tsx
+  s_80f397cd874d03::t_3823ece0919a2c 4,41-42,46-48
+  s_80f397cd874d03::t_5f332a092cb10d 50
+  s_80f397cd874d03::t_a9e8d80e1a2c8f 51,53,55,67-69
+desktop/src/lib/model-lock.test.ts
+  s_80f397cd874d03::t_bdc412db2cf4ac 1-16
+docs/features.mmd
+  s_80f397cd874d03::t_db97e8c52c60ea 1-102,104-216
+  s_80f397cd874d03::t_5dd91bd3ef29ef 103
+desktop/src-tauri/src/qwen/transcription.rs
+  s_80f397cd874d03::t_e6ba3b3a1d7065 146,335-337
+  s_80f397cd874d03::t_d48f74c02d31a0 36-40,62-75,83,89-90,150,154,239-246,308-334,338-343
+  s_80f397cd874d03::t_e6b9d054b1fdab 1-35,41-61,76-82,84-88,91-145,147-149,151-153,155-238,247-307,344-345
+desktop/src-tauri/resources/qwen3-asr-1.7b.json
+  s_80f397cd874d03::t_a8a33f519dfb08 1-14
+plans/qwen3-asr/qwen3-asr_001.py
+  s_80f397cd874d03::t_59d58a63e4627a 1-13,15-17,19-135,171-198
+  s_80f397cd874d03::t_de0961e8946241 14,18,136-170
+desktop/src-tauri/src/cmd/media_input.rs
+  s_80f397cd874d03::t_437ed9409e5bdf 1-212
+  s_80f397cd874d03::t_693ca2200f553a 213-308
+desktop/src/lib/media-download.ts
+  s_80f397cd874d03::t_d245ae070e2b28 1-12,15-24,28,41-49
+  s_80f397cd874d03::t_6324a24984ecbf 13-14,25-27,29-40
+  s_80f397cd874d03::t_fdde5d30da63e1 50-54
+desktop/src-tauri/src/main.rs
+  s_80f397cd874d03::t_ee8c91f4626bd0 125-127
+  s_80f397cd874d03::t_a8a33f519dfb08 18
+  s_80f397cd874d03::t_a071582f7a65dc 152-153
+plans/qwen3-asr/implementation.md
+  s_80f397cd874d03::t_5f0a55b935f996 30-31,37-40,44,46-47,56
+  s_80f397cd874d03::t_a8a33f519dfb08 1-29,34-36,41-43,48-50
+  s_80f397cd874d03::t_f92972b05e80c3 32-33,45,51-55,57
+docs/superpowers/specs/2026-10-28-homepage-media-input-design.md
+  s_80f397cd874d03::t_f4f48de0b4a898 1-2,4-80,83-101,103-104,106-122
+  s_80f397cd874d03::t_29c6582eeb26e6 81-82,102,105
+  s_80f397cd874d03::t_fa60e838810be8 3
+desktop/src/lib/ai/presets.ts
+  s_80f397cd874d03::t_decf1582a72aee 1-32
+desktop/src/pages/main/components/media-model-picker.tsx
+  s_80f397cd874d03::t_9e405479b18a43 1-142
+  s_80f397cd874d03::t_a0482883249c2f 143-158
+desktop/src/lib/ai/presets.test.ts
+  s_80f397cd874d03::t_c664906a64a6d8 1-35
+README.md
+  s_80f397cd874d03::t_4669298016de86 28-38
+desktop/src/pages/settings/sections/tuning.tsx
+  s_80f397cd874d03::t_ee8c91f4626bd0 9,18-29,31-40
+  s_80f397cd874d03::t_eeb265831bb1b2 41-47
+chorefile
+  s_80f397cd874d03::t_18381ac97d58b0 24-28,46-48,155,157
+scripts/download_qwen_model.py
+  s_80f397cd874d03::t_1c412ce368cfb6 1-7,10-14,18-24,31-37,99-114,116-125,170-176,178-183,188-229,234,237-240,246-248,256-262,264-267
+  s_80f397cd874d03::t_d873b3b4905990 9,16,38-82,85-94,97-98,236,249-255
+  s_80f397cd874d03::t_8cc9037b8923d5 25-30,169,177,230-233,243-245,263
+  s_80f397cd874d03::t_9ba5ee1abfee7c 8,15,17,115,126-150,152-168,184-187,235,241-242
+  s_80f397cd874d03::t_ee966ee2c91aed 96,268-271
+  s_80f397cd874d03::t_d14c8ae7bce78f 151
+  s_80f397cd874d03::t_4fd2592cb1c96d 83-84,95
+docs/FEATURE_MAP.md
+  s_80f397cd874d03::t_4669298016de86 1-6,8,10-27,29-45,47-48
+  s_80f397cd874d03::t_5dd91bd3ef29ef 7,9,28,46
+desktop/src-tauri/Cargo.toml
+  s_80f397cd874d03::t_a8a33f519dfb08 42-43
+desktop/src/pages/main/page.test.tsx
+  s_80f397cd874d03::t_529ed7e92b4c73 79
+  s_80f397cd874d03::t_fe535237a62fbd 1-78,80-95
+desktop/src-tauri/src/setup.rs
+  s_80f397cd874d03::t_a8a33f519dfb08 21,34
+  s_80f397cd874d03::t_475ffbe7e25f68 35-37
+Cargo.lock
+  s_80f397cd874d03::t_401f7fcc342683 8275
+HOMEPAGE.md
+  s_80f397cd874d03::t_66c6d2a03a4ac8 1-49
+desktop/src-tauri/src/cmd/mod.rs
+  s_80f397cd874d03::t_f9caa817a140ac 9-10
+desktop/src/pages/main/components/recents-sidebar.tsx
+  s_80f397cd874d03::t_4e42ac9c73bbc7 382,412,434,480
+desktop/src/pages/main/hooks/transcribe-queue-types.ts
+  s_80f397cd874d03::t_42ad7239fa8161 1-112
+docs/features.svg
+  s_80f397cd874d03::t_2faa4b891f9357 1
+plans/homepage-media-input/homepage-media-input_001.md
+  s_80f397cd874d03::t_4dd747807d9bcb 1-58
+plans/homepage-media-input/homepage-media-input_001.py
+  s_80f397cd874d03::t_345bdd4bf6bede 1-129
+plans/qwen3-asr/qwen3-asr_002.md
+  s_80f397cd874d03::t_e1923c7386dc3b 1-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "d1a1f7c00ea2f95b1111d7fdf741543adfe8752f",
+  "prompts": {},
+  "sessions": {
+    "s_80f397cd874d03": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a17c0b-aba7-74e2-a096-7076199ecc6a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "fun.ma <fun.ma@ly.com>"
+    }
+  }
+}
